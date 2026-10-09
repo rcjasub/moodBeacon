@@ -34,8 +34,8 @@ function Preview({ frame, hint }) {
     <div style={{ width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ position: 'relative', aspectRatio: '16 / 9', borderRadius: 16, overflow: 'hidden', background: '#0A0A0A' }}>
         {frame
-          ? <img src={`data:image/jpeg;base64,${frame}`} alt="Live camera preview (mirrored)"
-              style={{ width: '100%', height: '100%', objectFit: 'cover', transform: 'scaleX(-1)', display: 'block' }} />
+          ? <img src={`data:image/jpeg;base64,${frame}`} alt="Live camera preview"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           : <span style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', color: '#bbb', fontSize: 14 }}>Starting camera…</span>}
         <span style={{ position: 'absolute', top: 10, left: 10, padding: '2px 10px', borderRadius: 999, background: 'rgba(10,10,10,.7)', color: '#fff', fontSize: 12, fontWeight: 600 }}>
           Live · not recorded
