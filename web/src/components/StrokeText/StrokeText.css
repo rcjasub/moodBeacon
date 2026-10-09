@@ -1,0 +1,24 @@
+/* Written locally: the React Bits snippet references this file but it wasn't included. */
+.stroke-text {
+  display: block;
+  width: 100%;
+  height: var(--stroke-text-height);
+  line-height: 0;
+}
+
+.stroke-text__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.stroke-text__stroke,
+.stroke-text__fill {
+  font-family: inherit;
+  white-space: pre;
+}
+
+.stroke-text--hover {
+  cursor: default;
+}

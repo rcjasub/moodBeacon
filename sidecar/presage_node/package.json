@@ -1,0 +1,10 @@
+{
+  "name": "bipolarbird-presage",
+  "private": true,
+  "type": "module",
+  "description": "Runs the SmartSpectra Node SDK and prints one JSON reading per line for run_sidecar.py",
+  "dependencies": {
+    "@smartspectra/node-sdk": "^3.4.0",
+    "jpeg-js": "^0.4.4"
+  }
+}

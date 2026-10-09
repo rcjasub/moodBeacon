@@ -1,0 +1,19 @@
+# Local Postgres + TimescaleDB. Skip this if you point DATABASE_URL at Tiger Data (Timescale Cloud).
+services:
+  db:
+    image: timescale/timescaledb:latest-pg16
+    environment:
+      POSTGRES_USER: moodbeacon
+      POSTGRES_PASSWORD: moodbeacon
+      POSTGRES_DB: moodbeacon
+    ports:
+      - "${DB_PORT:-5433}:5432"   # 5433 avoids clashing with a local Postgres
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U moodbeacon"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  dbdata:
