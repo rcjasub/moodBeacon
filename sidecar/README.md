@@ -44,6 +44,14 @@ pip install -r requirements-emotion.txt   # TensorFlow needs Python 3.10–3.12
 python -m emotion.train path/to/fer2013_landmarks_nopathsfixed.csv
 ```
 
+No landmark CSV? Build one from the FER2013 images (Kaggle `fer2013.csv`, or the parquet files
+from huggingface.co/datasets/AutumnQiu/fer2013) with the same extractor the live camera uses:
+
+```bash
+python -m emotion.build_landmarks train.parquet valid.parquet test.parquet -o fer2013_landmarks.csv
+python -m emotion.train fer2013_landmarks.csv   # ~44% test accuracy over 7 classes
+```
+
 Training writes `emotion/models/{emotion_mlp.keras,scaler.joblib,meta.json}`. With
 `SOURCE=presage` the sidecar loads them at startup (first run downloads OpenCV's 68-point
 landmark model, ~54 MB). Without them the radar stays off and everything else works as before.

@@ -1,0 +1,13 @@
+{
+  "labels": [
+    "angry",
+    "disgust",
+    "fear",
+    "happy",
+    "sad",
+    "surprise",
+    "neutral"
+  ],
+  "n_points": 68,
+  "test_accuracy": 0.44335066864784545
+}

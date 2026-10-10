@@ -1,25 +1,20 @@
 """Live expression estimate: preview JPEG -> 68 face landmarks -> trained model -> smoothed scores.
 
-Landmarks come from OpenCV's LBF facemark, which uses the same 68-point layout as dlib
-(the layout of the FER2013 landmark CSV). Frames are decoded in memory and dropped right away.
+Frames are decoded in memory and dropped right away.
 """
 
 import base64
 import json
 import logging
-import urllib.request
-from pathlib import Path
 
 import numpy as np
 
 from . import LABELS
 from .features import normalize
+from .landmarks import MODELS_DIR, LandmarkExtractor
 
 log = logging.getLogger(__name__)
 
-MODELS_DIR = Path(__file__).resolve().parent / "models"
-LBF_URL = "https://raw.githubusercontent.com/kurnianggoro/GSOC2017/master/data/lbfmodel.yaml"
-LBF_PATH = MODELS_DIR / "lbfmodel.yaml"
 SMOOTHING = 0.35  # weight of the newest frame in the moving average
 
 
@@ -34,15 +29,8 @@ class EmotionTracker:
             raise RuntimeError(f"model was trained on {meta['n_points']} landmarks; live landmarks have 68")
         self.model = tf.keras.models.load_model(MODELS_DIR / "emotion_mlp.keras")
         self.scaler = joblib.load(MODELS_DIR / "scaler.joblib")
-        if not LBF_PATH.exists():
-            log.info("downloading face landmark model to %s", LBF_PATH)
-            urllib.request.urlretrieve(LBF_URL, LBF_PATH)
         self.cv2 = cv2
-        self.detector = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
-        if self.detector.empty():
-            raise RuntimeError("OpenCV face detector missing; install opencv-contrib-python-headless<5")
-        self.facemark = cv2.face.createFacemarkLBF()
-        self.facemark.loadModel(str(LBF_PATH))
+        self.extractor = LandmarkExtractor()
         self.smoothed: np.ndarray | None = None
 
     @classmethod
@@ -64,14 +52,7 @@ class EmotionTracker:
     def landmarks(self, jpeg_b64: str) -> np.ndarray | None:
         cv2 = self.cv2
         img = cv2.imdecode(np.frombuffer(base64.b64decode(jpeg_b64), np.uint8), cv2.IMREAD_GRAYSCALE)
-        if img is None:
-            return None
-        faces = self.detector.detectMultiScale(img, scaleFactor=1.1, minNeighbors=5, minSize=(48, 48))
-        if len(faces) == 0:
-            return None
-        biggest = max(faces, key=lambda f: f[2] * f[3])
-        ok, shapes = self.facemark.fit(img, np.array([biggest]))
-        return shapes[0][0] if ok else None  # (68, 2)
+        return None if img is None else self.extractor.from_frame(img)
 
     def update(self, jpeg_b64: str) -> dict:
         """One frame in, one `emotion` message out. Blocking; call it from a worker thread."""
