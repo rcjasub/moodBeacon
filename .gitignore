@@ -39,3 +39,6 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# Emotion model: 54 MB landmark model is downloaded on first run
+sidecar/emotion/models/lbfmodel.yaml

@@ -1,0 +1,9 @@
+# Optional: facial-expression radar (training + live inference). Base sidecar runs without these.
+numpy>=1.26
+pandas>=2.2
+scikit-learn>=1.5
+joblib>=1.4
+tensorflow>=2.17
+# 4.x: OpenCV 5 dropped the bundled Haar face cascade
+opencv-contrib-python-headless>=4.10,<5
+scipy!=1.15.*  # 1.15 wheels fail to load on recent macOS

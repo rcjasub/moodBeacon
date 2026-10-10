@@ -14,6 +14,18 @@ log = logging.getLogger(__name__)
 router = APIRouter(tags=["live"])
 
 
+EMOTIONS = ("angry", "disgust", "fear", "happy", "sad", "surprise", "neutral")
+
+
+def clean_emotion(msg: dict) -> dict:
+    """Facial-expression scores (0-1 per FER2013 label) for the live radar. Display only, never stored."""
+    scores = msg.get("scores")
+    if not msg.get("face") or not isinstance(scores, dict):
+        return {"type": "emotion", "face": False, "scores": None}
+    num = lambda v: min(1.0, max(0.0, float(v))) if isinstance(v, (int, float)) else 0.0  # noqa: E731
+    return {"type": "emotion", "face": True, "scores": {k: num(scores.get(k)) for k in EMOTIONS}}
+
+
 @router.websocket("/ws/live")
 async def browser_ws(ws: WebSocket):
     """Browser subscribes here for live readings and session state."""
@@ -60,6 +72,9 @@ async def sidecar_ws(ws: WebSocket, token: str = ""):
                 continue
             if msg.get("type") == "hint":
                 await hub.broadcast({"type": "hint", "text": str(msg.get("text") or "")[:200]})
+                continue
+            if msg.get("type") == "emotion":
+                await hub.broadcast(clean_emotion(msg))
                 continue
             if msg.get("type") != "reading":
                 continue

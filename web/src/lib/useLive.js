@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react'
 import { api, liveSocketUrl } from './api.js'
 
 const TRACE_KEEP = 400 // samples per waveform kept on screen
+const NO_EMOTION = { current: null, face: false, sum: null, count: 0 }
 
-/** Subscribes to /ws/live: sidecar status, session state, live readings, preview frames and tips. */
+/** Subscribes to /ws/live: sidecar status, session state, live readings, preview frames, tips and expression scores. */
 export function useLive() {
   const [sidecar, setSidecar] = useState(false)
   const [active, setActive] = useState(null)
@@ -13,6 +14,8 @@ export function useLive() {
   const [hint, setHint] = useState('')
   const [traces, setTraces] = useState({ pulse: [], breathing: [] })
   const [startedAt, setStartedAt] = useState(null)
+  // Expression scores: latest (smoothed in the sidecar) plus a running sum for the session average.
+  const [emotion, setEmotion] = useState(NO_EMOTION)
   const wsRef = useRef(null)
 
   useEffect(() => {
@@ -35,6 +38,7 @@ export function useLive() {
         } else if (m.type === 'session') {
           if (m.state === 'started') {
             setActive(m.session.id); setReadings([]); setLastSession(null); setStartedAt(Date.now())
+            setEmotion(NO_EMOTION)
           } else {
             setActive(null); setLastSession(m.session); setStartedAt(null)
           }
@@ -50,6 +54,12 @@ export function useLive() {
           }))
         } else if (m.type === 'hint') {
           setHint(m.text)
+        } else if (m.type === 'emotion') {
+          setEmotion((e) => {
+            if (!m.face || !m.scores) return { ...e, face: false }
+            const sum = Object.fromEntries(Object.entries(m.scores).map(([k, v]) => [k, (e.sum?.[k] ?? 0) + v]))
+            return { current: m.scores, face: true, sum, count: e.count + 1 }
+          })
         } else if (m.type === 'reading') {
           setReadings((r) => [...r.slice(-119), m])
         }
@@ -63,5 +73,12 @@ export function useLive() {
     return () => { closed = true; clearTimeout(retry); wsRef.current?.close() }
   }, [])
 
-  return { sidecar, active, readings, lastSession, frame, hint, traces, startedAt }
+  const emotionAvg = emotion.count
+    ? Object.fromEntries(Object.entries(emotion.sum).map(([k, v]) => [k, v / emotion.count]))
+    : null
+
+  return {
+    sidecar, active, readings, lastSession, frame, hint, traces, startedAt,
+    emotion: emotion.current, faceVisible: emotion.face, emotionAvg,
+  }
 }
