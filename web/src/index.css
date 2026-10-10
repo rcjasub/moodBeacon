@@ -2,17 +2,17 @@
 :root {
   --ink: #0A0A0A;
   --muted: #555;
-  --page: #F0F0F0;
+  --page: #F6F6F6;
   --card: #fff;
   --brand: #439775;
   --brand-ink: #2F7557;
-  --mint: #D9EAE3;
+  --mint: #E8F2EE;
   --mint-ink: #2B3A33;
   --mint-line: #9DB8AC;
-  --lavender: #DADBF8;
-  --butter: #FFFCE5;
+  --lavender: #E9EAFB;
+  --butter: #FFFDF0;
   --butter-line: #EDE6A8;
-  --pink: #FFCFE1;
+  --pink: #FFE3EE;
   --display: 'Outfit', sans-serif;
   --body: 'Inter Tight', system-ui, sans-serif;
 }
@@ -73,16 +73,16 @@ a.r3:hover { transform: rotate(2deg) scale(1.02); }
 .tilehead > span { font-size: 14px; }
 
 .page-header { display: flex; flex-direction: column; gap: 16px; margin: 32px 8px 24px; }
-/* Stroke-drawn headline: two SVG lines stacked as tightly as the original line-height: 1. */
-.stroke-title { display: flex; flex-direction: column; width: min(640px, 100%); }
-.stroke-title__row { display: flex; align-items: center; gap: 12px; margin-top: calc(-1 * clamp(12px, 1.9vw, 19px)); }
-.stroke-title__line { height: clamp(48px, 7.4vw, 76px); }
-.stroke-title__row .stroke-title__line { flex: 1; min-width: 0; }
+/* Folding headline: two lines, the second with the logo in front. */
+.fold-title { display: flex; flex-direction: column; gap: 6px; width: min(640px, 100%); }
+.fold-title__row { display: flex; align-items: center; gap: 12px; }
+.fold-title__line .fold-text-visual { white-space: nowrap; }
 .page-header h1 { max-width: 640px; font: 600 clamp(36px,5.5vw,56px)/1 var(--body); letter-spacing: -.025em; }
 .page-header .lede { margin: 0; max-width: 380px; font-size: 17px; line-height: 1.45; font-weight: 600; color: var(--muted); }
 .meta { display: flex; flex-wrap: wrap; gap: 8px 24px; color: var(--brand-ink); font-size: 16px; font-weight: 600; }
 
 .row { display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px,100%),1fr)); gap: 16px; }
 .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px,100%),1fr)); gap: 16px; }
 .muted { color: var(--mint-ink); font-size: 14px; }
 .sample-badge { display: inline-block; padding: 2px 10px; border-radius: 999px; background: var(--butter); border: 1px solid var(--butter-line); font-size: 13px; font-weight: 600; }
@@ -91,6 +91,12 @@ a.r3:hover { transform: rotate(2deg) scale(1.02); }
 .crisis { text-align: center; font-size: 13px; color: var(--muted); line-height: 1.5; padding: 0 16px; }
 
 @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+
+/* Printing the appointment brief: only the brief itself. */
+@media print {
+  .topnav, .crisis, .no-print { display: none !important; }
+  .tile { background: #fff !important; box-shadow: none !important; }
+}
 
 @media (prefers-reduced-motion: reduce) {
   [style*="pulse-dot"] { animation: none !important; }

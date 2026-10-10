@@ -44,7 +44,7 @@ function ReportedChart({ days, byDay }) {
         const flags = ['racing_thoughts', 'irritable', 'unusual_activity', 'less_sleep_need'].filter((f) => c[f])
         return (
           <g key={d}>
-            <title>{`${shortDay(d)}: ${c.sleep_hours ?? '?'}h sleep, mood ${labelOf(MOODS, c.mood)}, energy ${labelOf(ENERGIES, c.energy)}${c.note ? ` — ${c.note}` : ''}`}</title>
+            <title>{`${shortDay(d)}: ${c.sleep_hours ?? '?'}h sleep, mood ${labelOf(MOODS, c.mood)}, energy ${labelOf(ENERGIES, c.energy)}`}</title>
             {c.sleep_hours != null && (
               <rect x={x + 8} width={COL - 16} y={sy(c.sleep_hours)} height={H - sy(c.sleep_hours)} rx="6" fill="#439775" opacity={c.is_sample ? 0.55 : 0.9} />
             )}
@@ -129,7 +129,6 @@ export default function Timeline() {
 
   const reported = Object.fromEntries((data?.reported ?? []).map((c) => [c.day, c]))
   const measured = Object.fromEntries((data?.measured ?? []).map((m) => [m.day, m]))
-  const notes = (data?.reported ?? []).filter((c) => c.note).reverse()
   const hasSample = (data?.reported ?? []).some((c) => c.is_sample)
 
   return (
@@ -162,15 +161,6 @@ export default function Timeline() {
         legend={<><span style={{ color: '#6B6FD6' }}>● heart rate (bpm)</span><span>● breathing (per min)</span></>}>
         {data?.measured?.length ? <MeasuredChart days={days} byDay={measured} /> : <p style={{ margin: 0 }}>No camera sessions in this period.</p>}
       </Lane>
-
-      {notes.length > 0 && (
-        <section className="tile" style={{ background: 'var(--page)', padding: 24 }}>
-          <h2 style={{ fontSize: 20, marginBottom: 12 }}>Your notes</h2>
-          <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.7 }}>
-            {notes.map((c) => <li key={c.day}><strong>{shortDay(c.day)}</strong> — {c.note}</li>)}
-          </ul>
-        </section>
-      )}
     </>
   )
 }

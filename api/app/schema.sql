@@ -52,3 +52,11 @@ CREATE TABLE IF NOT EXISTS wellness_plan (
     clinician_contact  TEXT NOT NULL DEFAULT '',
     updated_at         TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- "Let it go" notes: written down, then crumpled away. Separate from check-in notes,
+-- never read by rules or summaries, and deleted for good when crumpled.
+CREATE TABLE IF NOT EXISTS release_notes (
+    id          SERIAL PRIMARY KEY,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    text        TEXT NOT NULL
+);

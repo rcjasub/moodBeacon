@@ -10,7 +10,7 @@ router = APIRouter(prefix="/api/checkins", tags=["checkins"])
 
 FIELDS = (
     "mood", "energy", "sleep_hours", "less_sleep_need", "irritable",
-    "racing_thoughts", "unusual_activity", "off_baseline", "note",
+    "racing_thoughts", "unusual_activity", "off_baseline",
 )
 
 

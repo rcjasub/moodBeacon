@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import NavBar from './components/NavBar.jsx'
 import CrisisFooter from './components/CrisisFooter.jsx'
@@ -7,6 +8,9 @@ import Timeline from './pages/Timeline.jsx'
 import Privacy from './pages/Privacy.jsx'
 import Plan from './pages/Plan.jsx'
 import { useSmoothScroll } from './lib/useSmoothScroll.js'
+
+// Loaded on demand so three.js only downloads when the page is opened.
+const LetItGo = lazy(() => import('./pages/LetItGo.jsx'))
 
 export default function App() {
   useSmoothScroll()
@@ -20,6 +24,7 @@ export default function App() {
           <Route path="/timeline" element={<Timeline />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/plan" element={<Plan />} />
+          <Route path="/let-it-go" element={<Suspense fallback={null}><LetItGo /></Suspense>} />
         </Routes>
       </main>
       <CrisisFooter />

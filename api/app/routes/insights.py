@@ -1,7 +1,9 @@
 from collections import Counter
+from datetime import date
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
+from .. import appointment
 from ..db import pool
 from ..live import hub
 from ..config import get_settings
@@ -76,3 +78,39 @@ async def summary():
     }
     worded = await gemini_summary(facts)
     return {"facts": facts, "text": worded or template_summary(facts), "source": "gemini" if worded else "template"}
+
+
+@router.get("/appointment")
+async def appointment_brief(days: int = Query(30, ge=7, le=90)):
+    """A brief to bring to an appointment. Counts only; notes are never read here."""
+    async with pool.connection() as conn:
+        cur = await conn.execute(
+            """SELECT day, mood, energy, sleep_hours, less_sleep_need, irritable,
+                      racing_thoughts, unusual_activity, off_baseline
+               FROM checkins WHERE day > current_date - %s::int""",
+            (days,),
+        )
+        rows = await cur.fetchall()
+        cur = await conn.execute(
+            """SELECT (SELECT count(*) FROM sessions
+                        WHERE started_at > now() - make_interval(days => %s)) AS sessions,
+                      percentile_cont(0.5) WITHIN GROUP (ORDER BY heart_rate) AS heart_rate,
+                      percentile_cont(0.5) WITHIN GROUP (ORDER BY breathing_rate) AS breathing_rate
+               FROM readings WHERE ts > now() - make_interval(days => %s)""",
+            (days, days),
+        )
+        camera = await cur.fetchone()
+        cur = await conn.execute(
+            "SELECT count(*) AS n FROM prompts WHERE created_at > now() - make_interval(days => %s)",
+            (days,),
+        )
+        n_prompts = (await cur.fetchone())["n"]
+    facts = appointment.compute_facts(rows, camera, n_prompts, days, date.today())
+    worded = await appointment.gemini_brief(facts)
+    return {
+        "days": days,
+        "facts": appointment.fact_lines(facts),
+        "brief": worded["brief"] if worded else appointment.template_brief(facts),
+        "questions": worded["questions"] if worded else appointment.template_questions(facts),
+        "source": "gemini" if worded else "template",
+    }

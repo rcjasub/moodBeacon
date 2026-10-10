@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
 from .db import close_db, init_db
-from .routes import checkins, data, insights, live, prompts, sessions
+from .routes import checkins, data, insights, live, notes, prompts, sessions
 
 logging.basicConfig(level=logging.INFO)
 
@@ -26,7 +26,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for r in (checkins, prompts, sessions, insights, data, live):
+for r in (checkins, prompts, sessions, insights, data, live, notes):
     app.include_router(r.router)
 
 

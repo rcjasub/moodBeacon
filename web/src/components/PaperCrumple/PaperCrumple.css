@@ -1,0 +1,23 @@
+/* Written to match PaperCrumple.jsx (the original stylesheet wasn't included). */
+.paper-crumple { position: relative; width: 100%; overflow: hidden; touch-action: none; user-select: none; }
+.paper-crumple-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.paper-crumple-fallback {
+  position: absolute; left: 50%; top: 50%;
+  width: var(--pc-image-width); height: var(--pc-image-height);
+  pointer-events: none;
+}
+/* Invisible hit area; the component positions and sizes it over the paper every frame. */
+.paper-crumple-hit {
+  position: absolute; left: 0; top: 0; margin: 0; padding: 0;
+  border: 0; border-radius: 4px; background: transparent;
+  cursor: grab; touch-action: none; -webkit-tap-highlight-color: transparent;
+}
+.paper-crumple-hit[data-held="true"] { cursor: grabbing; }
+.paper-crumple-hit:disabled { cursor: default; }
+.paper-crumple-hit:focus { outline: none; }
+.paper-crumple-hit:focus-visible:not([data-pointer="true"]) { outline: 2px solid var(--ink, #0A0A0A); outline-offset: 6px; }
+.paper-crumple-focus { display: none; }
+.paper-crumple-sr {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}

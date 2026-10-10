@@ -17,7 +17,6 @@ class CheckinIn(BaseModel):
     racing_thoughts: bool = False
     unusual_activity: bool = False
     off_baseline: bool = False
-    note: str = Field(default="", max_length=2000)
 
 
 class ReadingIn(BaseModel):
@@ -37,3 +36,7 @@ class WellnessPlanIn(BaseModel):
     what_helps: str = Field(default="", max_length=4000)
     clinician_name: str = Field(default="", max_length=200)
     clinician_contact: str = Field(default="", max_length=200)
+
+
+class ReleaseNoteIn(BaseModel):
+    text: str = Field(min_length=1, max_length=600, pattern=r"\S")

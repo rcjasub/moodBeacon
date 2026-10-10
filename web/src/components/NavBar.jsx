@@ -5,6 +5,7 @@ const ITEMS = [
   ['/', 'Today'],
   ['/camera', 'Camera session'],
   ['/timeline', 'Timeline'],
+  ['/let-it-go', 'Let it go'],
   ['/privacy', 'Privacy and data'],
 ]
 

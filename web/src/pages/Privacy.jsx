@@ -27,7 +27,7 @@ export default function Privacy() {
   }
 
   const deleteAll = async () => {
-    if (!window.confirm('Delete all check-ins, camera readings, prompts and your wellness plan? This cannot be undone.')) return
+    if (!window.confirm('Delete all check-ins, camera readings, prompts, let-it-go notes and your wellness plan? This cannot be undone.')) return
     await api.del('/api/data')
     setMsg('All your data has been deleted.')
     refresh()
@@ -43,7 +43,7 @@ export default function Privacy() {
       <div className="grid3">
         <Fact bg="var(--lavender)" title="Video is never saved" text="Camera frames are processed live on this computer. A small preview is shown only to you while a session runs. Only heart rate, breathing and a quality score are stored." />
         <Fact bg="var(--mint)" title="No diagnosis" text="BipolarBird does not diagnose, score risk or predict episodes. Follow-ups come from simple rules on your own check-ins." />
-        <Fact bg="var(--pink)" title="Nothing shared" text="There is no sharing feature. If summaries are turned on, only a few counts (never notes) are sent to Gemini for wording." />
+        <Fact bg="var(--pink)" title="Nothing shared" text="There is no sharing feature. If summaries are turned on, only a few counts (never notes) are sent to Gemini for wording, for the weekly summary and appointment brief." />
       </div>
 
       <section className="tile" style={{ background: 'var(--page)', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -57,7 +57,7 @@ export default function Privacy() {
         {msg && <p role="status" style={{ margin: 0 }}>{msg}</p>}
         {status && (
           <p className="muted" style={{ margin: 0 }}>
-            Gemini summaries: {status.gemini_enabled ? 'on' : 'off (no API key set)'} · Camera service: {status.sidecar_connected ? 'connected' : 'not running'}
+            Gemini wording: {status.gemini_enabled ? 'on' : 'off (no API key set)'} · Camera service: {status.sidecar_connected ? 'connected' : 'not running'}
           </p>
         )}
       </section>
