@@ -9,7 +9,7 @@ export default function FollowUpCard({ prompt, onDone }) {
   }
 
   return (
-    <section className="tile" aria-labelledby="fu" style={{ background: 'var(--butter)', border: '1px solid var(--butter-line)', padding: '28px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, textAlign: 'center' }}>
+    <section className="tile" aria-labelledby="fu" style={{ background: 'var(--butter)', padding: '28px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, textAlign: 'center' }}>
       <TileHead id="fu" kicker="From your own check-ins" title="Worth a look" tilt={-3} />
       <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5, maxWidth: 320 }}>{prompt.message}</p>
       {prompt.is_sample && <span className="sample-badge">Sample data</span>}

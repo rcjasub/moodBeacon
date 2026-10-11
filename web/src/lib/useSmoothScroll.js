@@ -25,9 +25,9 @@ export function useSmoothScroll() {
     }
   }, [])
 
-  // New page starts at the top (instantly, not animated).
+  // New page: glide back to the top with Lenis (instant if motion is reduced).
   useEffect(() => {
-    if (lenisRef.current) lenisRef.current.scrollTo(0, { immediate: true })
+    if (lenisRef.current) lenisRef.current.scrollTo(0, { duration: 0.8, easing: (t) => 1 - Math.pow(1 - t, 3) })
     else window.scrollTo(0, 0)
   }, [pathname])
 }

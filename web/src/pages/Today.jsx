@@ -4,6 +4,7 @@ import Logo from '../components/Logo.jsx'
 import FoldText from '../components/FoldText/FoldText.jsx'
 import CheckinForm from '../components/CheckinForm.jsx'
 import FollowUpCard from '../components/FollowUpCard.jsx'
+import Highlighter from '../components/Highlighter.jsx'
 import TileHead from '../components/TileHead.jsx'
 import { api } from '../lib/api.js'
 import { longDate, relativeTime } from '../lib/format.js'
@@ -35,7 +36,13 @@ export default function Today() {
               <TitleLine text="Understand patterns." />
             </span>
           </h1>
-          <p className="lede">A private companion for tracking sleep, mood and energy, so you can decide what to do next. It does not diagnose or predict episodes.</p>
+          <p className="lede">
+            A private companion for tracking{' '}
+            <Highlighter action="highlight" color="#E3D67D" delay={400}>sleep, mood and energy</Highlighter>,
+            so you can{' '}
+            <Highlighter action="underline" color="#DC5F28" delay={1100}>decide what to do next</Highlighter>.
+            It does not diagnose or predict episodes.
+          </p>
         </div>
         <div className="meta">
           <span>{longDate()}</span>
@@ -70,7 +77,7 @@ export default function Today() {
         <LinkTile to="/timeline" cls="r1" bg="var(--butter)" tilt={-3} kicker="Charts" title="Timeline"
           text="Sleep and check-ins on one chart, camera readings on another." />
         <LinkTile to="/privacy" cls="r2" bg="var(--page)" tilt={3} kicker="You are in control" title="Privacy and data"
-          text="Video is never saved. Export or delete anything, any time." />
+          text="Video is never saved. Delete anything, any time." />
       </div>
     </>
   )

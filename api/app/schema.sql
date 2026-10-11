@@ -60,3 +60,18 @@ CREATE TABLE IF NOT EXISTS release_notes (
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
     text        TEXT NOT NULL
 );
+
+-- Follow-up after a session whose heart rate was higher than usual. First the person rules out
+-- everyday causes (explained_by); only if none apply do they answer the mania questionnaire.
+CREATE TABLE IF NOT EXISTS screenings (
+    id                SERIAL PRIMARY KEY,
+    created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    session_id        UUID REFERENCES sessions(id) ON DELETE SET NULL,
+    heart_rate        REAL,
+    usual_heart_rate  REAL,
+    explained_by      TEXT[] NOT NULL DEFAULT '{}',
+    answers           JSONB,      -- null when an everyday reason explained the reading
+    also_noticed      TEXT[] NOT NULL DEFAULT '{}',
+    score             INT,
+    is_sample         BOOLEAN NOT NULL DEFAULT FALSE
+);

@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
 import TileHead from '../components/TileHead.jsx'
 import { api } from '../lib/api.js'
 
@@ -9,16 +8,6 @@ export default function Privacy() {
 
   const refresh = () => api.get('/api/status').then(setStatus).catch(() => {})
   useEffect(() => { refresh() }, [])
-
-  const exportData = async () => {
-    const data = await api.get('/api/data/export')
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(blob)
-    a.download = `bipolarbird-export-${new Date().toISOString().slice(0, 10)}.json`
-    a.click()
-    URL.revokeObjectURL(a.href)
-  }
 
   const removeSample = async () => {
     await api.del('/api/data/sample')
@@ -43,15 +32,16 @@ export default function Privacy() {
       <div className="grid3">
         <Fact bg="var(--lavender)" title="Video is never saved" text="Camera frames are processed live on this computer. A small preview is shown only to you while a session runs. Only heart rate, breathing and a quality score are stored." />
         <Fact bg="var(--mint)" title="No diagnosis" text="BipolarBird does not diagnose, score risk or predict episodes. Follow-ups come from simple rules on your own check-ins." />
-        <Fact bg="var(--pink)" title="Nothing shared" text="There is no sharing feature. If summaries are turned on, only a few counts (never notes) are sent to Gemini for wording, for the weekly summary and appointment brief." />
+        <Fact bg="var(--pink)" title="You choose what's shared" text="Nothing leaves the app unless you send it, like emailing a heart-rate check-in to someone you trust. If summaries are turned on, only a few counts (never notes) are sent to Gemini for wording, for the weekly summary and appointment brief." />
       </div>
 
-      <section className="tile" style={{ background: 'var(--page)', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <section className="tile danger-zone" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
         <TileHead kicker="Any time" title="Your data" tilt={-1} align="start" />
+        <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5, maxWidth: 560 }}>
+          Deleting removes every check-in, camera reading, follow-up and note from your database. It cannot be undone.
+        </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          <button className="btn btn-dark" onClick={exportData}>Export everything (JSON)</button>
           {status?.has_sample && <button className="btn" onClick={removeSample}>Remove sample data</button>}
-          <Link className="btn" to="/plan">Edit wellness plan</Link>
           <button className="btn btn-danger" onClick={deleteAll}>Delete all my data</button>
         </div>
         {msg && <p role="status" style={{ margin: 0 }}>{msg}</p>}

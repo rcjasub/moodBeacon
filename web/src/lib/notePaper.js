@@ -27,14 +27,14 @@ export async function notePaperURL(text, date) {
   const ctx = c.getContext('2d')
   const W = c.width, H = c.height, LINE = 52, TOP = 120, LEFT = 84
 
-  ctx.fillStyle = '#FFFCE5' // --butter
+  ctx.fillStyle = '#FFFCE5' // butter paper
   ctx.fillRect(0, 0, W, H)
   ctx.strokeStyle = '#E6DFA0'
   ctx.lineWidth = 2
   for (let y = TOP; y < H - 60; y += LINE) {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke()
   }
-  ctx.strokeStyle = '#F2A7C3' // margin rule
+  ctx.strokeStyle = '#D76574' // margin rule
   ctx.beginPath(); ctx.moveTo(LEFT - 20, 0); ctx.lineTo(LEFT - 20, H); ctx.stroke()
 
   ctx.fillStyle = '#0A0A0A'

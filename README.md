@@ -83,6 +83,13 @@ when the extension is available (always on Tiger Data).
 - **Follow-up rules** — `api/app/rules.py`: short sleep 3 nights running vs your own usual,
   racing thoughts 3 of 5 days, raised energy 3 days running, low mood 5 of 7 days.
   Each prompt can be reviewed, snoozed until tomorrow, or dismissed.
+- **Higher heart rate follow-up** — when a session's typical heart rate is ≥100 bpm or 20+ above
+  your own usual (`api/app/heart.py`), the Camera page first asks about everyday causes (exercise,
+  caffeine, a scary movie, stress, blood sugar/blood pressure, medication, illness). Only if none
+  apply does it offer five questions adapted from the Altman Self-Rating Mania Scale
+  (`api/app/screening.py`). The result can be emailed to a friend or professional, either through
+  your own email app or via SMTP if `SMTP_*` is set in `.env`. Try it without a camera:
+  `SOURCE=mock MOCK_HR=115 python run_sidecar.py`.
 - **Summary** — numbers computed in code; Gemini only rewords them under a constrained prompt.
 - **Privacy** — export everything as JSON, remove sample data, or delete all data.
 
