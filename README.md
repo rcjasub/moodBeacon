@@ -47,6 +47,11 @@ Both the API and the sidecar read this file. Restart them after editing it.
 
 Prerequisites: Node 20+, Python 3.11+, Docker (only for local Postgres), a webcam.
 
+> **Python version for the sidecar:** the facial-expression radar needs TensorFlow, which has no
+> stable release for Python 3.14 yet. Create `sidecar/.venv` with Python **3.11–3.13**
+> (e.g. `brew install python@3.12`, then `python3.12 -m venv .venv`). On 3.14 the sidecar still
+> runs, but logs `expression radar off` and the Camera page stays on "Waiting for a face in view…".
+
 ```bash
 # 1. Database — skip if DATABASE_URL points at Tiger Data
 docker compose up -d db          # TimescaleDB on localhost:5433
