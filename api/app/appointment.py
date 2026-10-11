@@ -3,16 +3,13 @@
 Same contract as the weekly summary: only counts and averages are sent, never notes.
 """
 
-import logging
 from collections import Counter
 from datetime import date, timedelta
 from statistics import median
 
 from pydantic import BaseModel
 
-from .config import get_settings
-
-log = logging.getLogger(__name__)
+from . import gemini
 
 # Last good Gemini wording, reused until the underlying facts change.
 _cache: dict[str, dict] = {}
@@ -138,36 +135,16 @@ def _looks_ok(w: Wording) -> bool:
 
 
 async def gemini_brief(f: dict) -> dict | None:
-    s = get_settings()
-    if not s.gemini_api_key:
+    if not gemini.enabled():
         return None
     key = repr(f)
     if key in _cache:
         return _cache[key]
-    try:
-        from google import genai
-        from google.genai import types
-
-        client = genai.Client(api_key=s.gemini_api_key)
-        facts = "\n".join(f"- {line}" for line in fact_lines(f))
-        resp = await client.aio.models.generate_content(
-            model=s.gemini_model,
-            contents=f"Facts from my own tracking:\n{facts}",
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_INSTRUCTION,
-                temperature=0.2,
-                max_output_tokens=2048,  # newer models spend part of this on reasoning
-                response_mime_type="application/json",
-                response_schema=Wording,
-            ),
-        )
-        w = resp.parsed if isinstance(resp.parsed, Wording) else Wording.model_validate_json(resp.text or "")
-        if not _looks_ok(w):
-            return None
-        out = {"brief": w.brief.strip(), "questions": [q.strip() for q in w.questions[:3]]}
-        _cache.clear()
-        _cache[key] = out
-        return out
-    except Exception as e:  # noqa: BLE001
-        log.warning("Gemini appointment brief failed, using template: %s", e)
+    facts = "\n".join(f"- {line}" for line in fact_lines(f))
+    w = await gemini.generate(SYSTEM_INSTRUCTION, f"Facts from my own tracking:\n{facts}", schema=Wording)
+    if w is None or not _looks_ok(w):
         return None
+    out = {"brief": w.brief.strip(), "questions": [q.strip() for q in w.questions[:3]]}
+    _cache.clear()
+    _cache[key] = out
+    return out

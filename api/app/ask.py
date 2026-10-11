@@ -11,8 +11,13 @@ from statistics import mean, median
 from pydantic import BaseModel
 
 from . import gemini
+from .config import get_settings
 
 DAYS = 30
+
+# Recent answers, keyed by question + data, so asking again (e.g. an example chip) is instant.
+_cache: dict[tuple[str, str], dict] = {}
+CACHE_SIZE = 50
 
 MOOD = {"low": "Low", "slightly_low": "A bit low", "steady": "Steady", "lifted": "Lifted", "very_high": "Very high"}
 ENERGY = {"very_low": "Very low", "lower": "Lower than usual", "usual": "Usual",
@@ -100,7 +105,15 @@ async def answer(question: str, data: str) -> dict:
         return {"answer": CRISIS_ANSWER, "source": "safety"}
     if not gemini.enabled():
         return {"answer": None, "source": "unavailable"}
-    out = await gemini.generate(SYSTEM_INSTRUCTION, f"My data:\n{data}\n\nMy question: {question}", schema=Answer)
+    key = (" ".join(question.lower().split()), data)
+    if key in _cache:
+        return _cache[key]
+    out = await gemini.generate(SYSTEM_INSTRUCTION, f"My data:\n{data}\n\nMy question: {question}", schema=Answer,
+                                model=get_settings().gemini_fast_model)
     if not out or not out.answer.strip() or out.answer.lstrip().startswith(("*", "-", "#")):
         return {"answer": "Gemini couldn't answer just now (it may be busy or out of quota). Try again later.", "source": "error"}
-    return {"answer": out.answer.strip(), "source": "gemini", "answerable": out.answerable}
+    result = {"answer": out.answer.strip(), "source": "gemini", "answerable": out.answerable}
+    if len(_cache) >= CACHE_SIZE:
+        _cache.pop(next(iter(_cache)))  # drop the oldest
+    _cache[key] = result
+    return result
