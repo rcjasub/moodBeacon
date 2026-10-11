@@ -21,6 +21,12 @@ class Settings(BaseSettings):
     # readings below this quality are stored as "no reading" (null values).
     min_quality: float = 0.6
 
+    # Login. Leave APP_PASSWORD empty to turn login off (local development only).
+    app_username: str = "admin"
+    app_password: str = ""
+    session_secret: str = ""
+    session_days: int = 7
+
     # Optional: send shared check-ins straight from the app. Without these the browser
     # opens the person's own email app instead.
     smtp_host: str = ""

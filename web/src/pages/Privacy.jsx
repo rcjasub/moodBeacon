@@ -32,7 +32,7 @@ export default function Privacy() {
       <div className="grid3">
         <Fact bg="var(--lavender)" title="Video is never saved" text="Camera frames are processed live on this computer. A small preview is shown only to you while a session runs. Only heart rate, breathing and a quality score are stored." />
         <Fact bg="var(--mint)" title="No diagnosis" text="BipolarBird does not diagnose, score risk or predict episodes. Follow-ups come from simple rules on your own check-ins." />
-        <Fact bg="var(--pink)" title="You choose what's shared" text="Nothing leaves the app unless you send it, like emailing a heart-rate check-in to someone you trust. If summaries are turned on, only a few counts (never notes) are sent to Gemini for wording, for the weekly summary and appointment brief." />
+        <Fact bg="var(--pink)" title="You choose what's shared" text="Nothing leaves the app unless you send it, like emailing a heart-rate check-in to someone you trust. If Gemini is turned on, it gets numbers and check-in choices (never notes, never names) to word the weekly summary, appointment brief, share-note drafts and answers to questions you ask on the Timeline." />
       </div>
 
       <section className="tile danger-zone" style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>

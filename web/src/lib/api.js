@@ -1,11 +1,19 @@
+import { clearToken, getToken } from './auth.js'
+
 const BASE = import.meta.env.VITE_API_URL || ''
 
 async function request(method, path, body) {
+  const headers = {}
+  if (body) headers['Content-Type'] = 'application/json'
+  const token = getToken()
+  if (token) headers.Authorization = `Bearer ${token}`
   const res = await fetch(BASE + path, {
     method,
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
+    headers,
     body: body ? JSON.stringify(body) : undefined,
   })
+  // Expired or missing login: drop the token so the app shows the login page.
+  if (res.status === 401 && !path.startsWith('/api/auth/')) clearToken()
   if (!res.ok) {
     let detail = res.statusText
     try { detail = (await res.json()).detail || detail } catch { /* not json */ }
@@ -23,5 +31,6 @@ export const api = {
 
 export function liveSocketUrl() {
   const base = BASE || window.location.origin
-  return base.replace(/^http/, 'ws') + '/ws/live'
+  const token = getToken()
+  return base.replace(/^http/, 'ws') + '/ws/live' + (token ? `?token=${encodeURIComponent(token)}` : '')
 }

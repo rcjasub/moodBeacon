@@ -63,6 +63,14 @@ class ScreeningIn(BaseModel):
         return v
 
 
+class ShareDraftIn(BaseModel):
+    recipient: Literal["friend", "family", "clinician"] = "friend"
+
+
+class AskIn(BaseModel):
+    question: str = Field(min_length=3, max_length=300, pattern=r"\S")
+
+
 class ShareEmailIn(BaseModel):
     to: str = Field(max_length=254, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
     note: str = Field(default="", max_length=1000)

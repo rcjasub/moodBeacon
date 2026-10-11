@@ -13,7 +13,7 @@ const ITEMS = [
 // The square behind the current tab slides to the new one (shared layoutId).
 const SLIDE = { type: 'spring', stiffness: 380, damping: 34, mass: 0.9 }
 
-export default function NavBar() {
+export default function NavBar({ onLogout }) {
   const { pathname } = useLocation()
   return (
     <nav aria-label="Primary" className="topnav">
@@ -32,6 +32,7 @@ export default function NavBar() {
               </NavLink>
             )
           })}
+          {onLogout && <button type="button" className="nav-logout" onClick={onLogout}>Log out</button>}
         </div>
       </MotionConfig>
     </nav>

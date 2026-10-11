@@ -106,7 +106,7 @@ export default function HeartCheck({ session, onClose }) {
       {step === 'result' && result && (
         <>
           <p style={{ margin: 0, fontSize: 16, lineHeight: 1.5, fontWeight: 600 }}>{result.outcome}</p>
-          <Share result={result} emailEnabled={form.email_enabled} />
+          <Share result={result} emailEnabled={form.email_enabled} draftEnabled={form.draft_enabled} />
           <button type="button" className="btn btn-quiet" style={{ alignSelf: 'flex-start' }} onClick={onClose}>Close</button>
         </>
       )}
@@ -116,10 +116,28 @@ export default function HeartCheck({ session, onClose }) {
   )
 }
 
-function Share({ result, emailEnabled }) {
+const RECIPIENTS = [['friend', 'A friend'], ['family', 'Family'], ['clinician', 'A professional']]
+
+function Share({ result, emailEnabled, draftEnabled }) {
   const [to, setTo] = useState('')
   const [note, setNote] = useState('')
   const [status, setStatus] = useState(null)
+  const [recipient, setRecipient] = useState('friend')
+  const [drafting, setDrafting] = useState(false)
+  const [drafted, setDrafted] = useState(null) // 'gemini' | 'template'
+
+  const draft = async () => {
+    setDrafting(true)
+    try {
+      const res = await api.post(`/api/screenings/${result.id}/draft`, { recipient })
+      setNote(res.note)
+      setDrafted(res.source)
+    } catch (e) {
+      setStatus(`Could not draft a note: ${e.message}`)
+    } finally {
+      setDrafting(false)
+    }
+  }
 
   // Pre-fill with the clinician or trusted person from the wellness plan, if it's an email.
   useEffect(() => {
@@ -148,10 +166,26 @@ function Share({ result, emailEnabled }) {
         <label htmlFor="share-to" className="label">Their email</label>
         <input id="share-to" className="input" type="email" value={to} onChange={(e) => setTo(e.target.value)} placeholder="name@example.com" />
       </div>
+      <fieldset style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <legend className="label" style={{ marginBottom: 8 }}>Who is it for?</legend>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+          {RECIPIENTS.map(([id, label]) => (
+            <button key={id} type="button" className="chip" aria-pressed={recipient === id} onClick={() => setRecipient(id)}>{label}</button>
+          ))}
+          <button type="button" className="btn" onClick={draft} disabled={drafting}>
+            {drafting ? 'Writing…' : draftEnabled ? 'Draft a note with Gemini' : 'Suggest a note'}
+          </button>
+        </div>
+      </fieldset>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <label htmlFor="share-note" className="label">A note from you (optional)</label>
-        <textarea id="share-note" className="textarea" rows={2} value={note} onChange={(e) => setNote(e.target.value)}
+        <textarea id="share-note" className="textarea" rows={4} value={note} onChange={(e) => { setNote(e.target.value); setDrafted(null) }}
           placeholder="Hi, I'd like to talk about how I've been feeling this week." />
+        {drafted && (
+          <span className="muted">
+            {drafted === 'gemini' ? 'Drafted by Gemini from your results (no names or notes were sent).' : 'A suggested note.'} Edit it however you like.
+          </span>
+        )}
       </div>
       <details>
         <summary style={{ cursor: 'pointer', fontSize: 14, fontWeight: 600 }}>Preview what they'll see</summary>

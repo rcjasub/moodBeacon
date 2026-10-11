@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import TileHead from '../components/TileHead.jsx'
+import AskTimeline from '../components/AskTimeline.jsx'
 import { FlagsChart, MeasureChart, MoodChart, SleepChart } from '../components/DayCharts.jsx'
 import { MEASURED, MEASURED_2, MOOD_COLOR, REPORTED } from '../lib/palette.js'
 import BentoDashboard, { BarChart, DonutChart, RadarChart } from '../components/BentoDashboard/BentoDashboard.jsx'
@@ -102,6 +103,8 @@ export default function Timeline() {
           </p>
         </section>
       )}
+
+      <AskTimeline />
 
       {data && <CheckinBento days={days} byDay={reported} />}
 

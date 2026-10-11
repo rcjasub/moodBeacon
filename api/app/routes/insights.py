@@ -3,7 +3,9 @@ from datetime import date
 
 from fastapi import APIRouter, Query
 
-from .. import appointment
+from ..models import AskIn
+
+from .. import appointment, ask
 from ..db import pool
 from ..live import hub
 from ..config import get_settings
@@ -114,3 +116,26 @@ async def appointment_brief(days: int = Query(30, ge=7, le=90)):
         "questions": worded["questions"] if worded else appointment.template_questions(facts),
         "source": "gemini" if worded else "template",
     }
+
+
+@router.post("/ask")
+async def ask_timeline(body: AskIn):
+    """Answer a question about your own last 30 days. Notes are never included."""
+    async with pool.connection() as conn:
+        cur = await conn.execute(
+            """SELECT day, mood, energy, sleep_hours, less_sleep_need, irritable,
+                      racing_thoughts, unusual_activity, off_baseline
+               FROM checkins WHERE day > current_date - %s::int""",
+            (ask.DAYS,),
+        )
+        checkins = await cur.fetchall()
+        cur = await conn.execute(
+            """SELECT date_trunc('day', ts)::date AS day,
+                      percentile_cont(0.5) WITHIN GROUP (ORDER BY heart_rate) AS hr,
+                      percentile_cont(0.5) WITHIN GROUP (ORDER BY breathing_rate) AS br
+               FROM readings WHERE ts > now() - make_interval(days => %s)
+               GROUP BY 1""",
+            (ask.DAYS,),
+        )
+        measured = await cur.fetchall()
+    return await ask.answer(body.question, ask.build_data(checkins, measured, date.today()))

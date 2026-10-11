@@ -5,10 +5,10 @@ from email.message import EmailMessage
 
 from fastapi import APIRouter, HTTPException
 
-from .. import screening
+from .. import gemini, screening, share_draft
 from ..config import get_settings
 from ..db import pool
-from ..models import ScreeningIn, ShareEmailIn
+from ..models import ScreeningIn, ShareDraftIn, ShareEmailIn
 
 router = APIRouter(prefix="/api/screenings", tags=["screenings"])
 
@@ -17,7 +17,7 @@ SUBJECT = "A BipolarBird check-in I wanted to share"
 
 @router.get("/form")
 async def get_form():
-    return {**screening.form(), "email_enabled": get_settings().email_enabled}
+    return {**screening.form(), "email_enabled": get_settings().email_enabled, "draft_enabled": gemini.enabled()}
 
 
 @router.post("")
@@ -56,6 +56,12 @@ async def create_screening(body: ScreeningIn):
 @router.get("/{screening_id}")
 async def get_screening(screening_id: int):
     return _with_text(await _fetch(screening_id))
+
+
+@router.post("/{screening_id}/draft")
+async def draft_note(screening_id: int, body: ShareDraftIn):
+    """A personal opening note for the share email, in a tone that fits who it's for."""
+    return await share_draft.draft(await _fetch(screening_id), body.recipient)
 
 
 @router.post("/{screening_id}/email")
