@@ -70,6 +70,38 @@ const hrTrack = makeTracker({ min: 40, max: 180, windowMs: 12000 })
 // Breathing is rarely marked stable, so also accept values with at least 50% confidence.
 const brTrack = makeTracker({ min: 4, max: 40, windowMs: 30000, minConfidence: 0.5 })
 
+// Fallback breathing rate counted from the raw breathing waveform, used while the SDK's own
+// rate is still unsettled. Counts breaths as upward crossings of the window mean, with a
+// hysteresis band so small wobbles don't count, then divides by the time they span.
+const BREATH_WINDOW_MS = 30000
+const BREATH_MIN_SPAN_MS = 15000
+let breathSamples = [] // { t (ms), v }
+let lastBreathSampleAt = 0
+function addBreathSample(t, now) {
+  lastBreathSampleAt = now
+  const ts = t.timestamp != null ? Number(t.timestamp) / 1000 : now // SDK timestamps are in µs
+  breathSamples.push({ t: ts, v: t.value })
+  breathSamples = breathSamples.filter((x) => ts - x.t <= BREATH_WINDOW_MS)
+}
+function waveformBreathingRate(now) {
+  if (now - lastBreathSampleAt > 10000) return null // face lost / poor light
+  const s = breathSamples
+  if (s.length < 20 || s.at(-1).t - s[0].t < BREATH_MIN_SPAN_MS) return null
+  const mean = s.reduce((a, x) => a + x.v, 0) / s.length
+  const sd = Math.sqrt(s.reduce((a, x) => a + (x.v - mean) ** 2, 0) / s.length)
+  if (!(sd > 0)) return null
+  const band = 0.3 * sd
+  const ups = [] // times of upward crossings
+  let low = false
+  for (const x of s) {
+    if (x.v < mean - band) low = true
+    else if (low && x.v > mean + band) { ups.push(x.t); low = false }
+  }
+  if (ups.length < 3) return null // need at least 2 full breaths between crossings
+  const rate = ((ups.length - 1) / (ups.at(-1) - ups[0])) * 60000
+  return rate >= 4 && rate <= 40 ? Math.round(rate * 10) / 10 : null
+}
+
 // Diagnostics on stderr (ends up in the sidecar log): what the SDK is actually sending.
 const seen = { metrics: 0, hr: 0, br: 0, lastHr: null, lastBr: null }
 const diag = setInterval(() => {
@@ -82,7 +114,11 @@ const traceBuf = { pulse: [], breathing: [] }
 sdk.on('metrics', (buf) => {
   const m = decodeMetrics(buf)
   for (const t of m.cardio?.arterialPressureTrace ?? []) if (t.value != null) traceBuf.pulse.push(t.value)
-  for (const t of m.breathing?.upperTrace ?? []) if (t.value != null) traceBuf.breathing.push(t.value)
+  for (const t of m.breathing?.upperTrace ?? []) {
+    if (t.value == null) continue
+    traceBuf.breathing.push(t.value)
+    addBreathSample(t, Date.now())
+  }
   const hr = m.cardio?.pulseRate?.at(-1)
   const br = m.breathing?.rate?.at(-1)
   seen.metrics++
@@ -141,7 +177,10 @@ const traceTimer = setInterval(() => {
 const timer = setInterval(() => {
   const now = Date.now()
   const hr = hrTrack.current(now)
-  const br = brTrack.current(now)
+  // The SDK's filtered rate wins; until it settles, fall back to counting breaths in the waveform.
+  // The waveform estimate has no confidence score, so it doesn't change quality (q: null).
+  const wave = waveformBreathingRate(now)
+  const br = brTrack.current(now) ?? (wave != null ? { value: wave, q: null } : null)
   emit({
     type: 'reading',
     heart_rate: hr?.value ?? null,

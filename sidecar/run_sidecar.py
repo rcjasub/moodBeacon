@@ -9,8 +9,8 @@ Sources:
   presage  runs the SmartSpectra Node SDK (presage_node/stream.mjs): readings, a small
            live preview (forwarded to your browser, never stored) and positioning tips
 
-If the emotion model is trained (emotion/train.py), preview frames also feed a facial
-expression estimate for the radar chart; frames are still never stored.
+With requirements-emotion.txt installed, preview frames also feed a facial expression
+estimate for the radar chart (emotion/ferplus.py); frames are still never stored.
 """
 
 import asyncio
@@ -117,7 +117,18 @@ EMOTION_INTERVAL_S = 0.5
 
 
 def load_emotion_tracker():
-    """Optional: needs requirements-emotion.txt and a trained model, otherwise the radar stays off."""
+    """Optional: needs requirements-emotion.txt, otherwise the radar stays off.
+
+    Prefers the pretrained FER+ model (downloaded on first run); falls back to the trained landmark model.
+    """
+    try:
+        from emotion.ferplus import FerPlusTracker
+    except ImportError as e:
+        log.info("expression radar off (%s); see sidecar/README.md", e)
+        return None
+    if tracker := FerPlusTracker.load_or_none():
+        log.info("expression radar on (FER+)")
+        return tracker
     try:
         from emotion.tracker import EmotionTracker
     except ImportError as e:

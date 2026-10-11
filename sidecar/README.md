@@ -34,9 +34,11 @@ measurements count as quality 0–0.5, which the API stores as "No reading".
 ## Facial-expression radar (optional)
 
 The Camera page can show a radar chart of facial-expression scores (angry, disgust, fear,
-happy, sad, surprise, neutral). Scores come from a model trained on FER2013 facial landmarks
-and run on the same in-memory preview frames, twice a second. Like the preview itself, the
-scores are only shown live and are never stored.
+happy, sad, surprise, neutral). Scores come from the pretrained FER+ CNN (`emotion/ferplus.py`,
+ONNX model run with OpenCV, ~34 MB, downloaded on first run), applied to the face in the same
+in-memory preview frames, twice a second. FER+'s extra "contempt" class is counted as disgust.
+If FER+ can't load, the sidecar falls back to the landmark model described below. Like the
+preview itself, the scores are only shown live and are never stored.
 
 **Needs Python 3.11–3.13.** TensorFlow has no stable release for Python 3.14 yet, so
 `pip install -r requirements-emotion.txt` fails there. If your default Python is 3.14, build the
