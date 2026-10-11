@@ -128,12 +128,16 @@ function steadiness(series, tight, loose) {
 
 function Metric({ label, unit, value, series, tight, loose }) {
   const steady = steadiness(series, tight, loose)
+  // When the current reading drops out, keep showing the most recent good one until a new one arrives.
+  const shown = value ?? series.findLast((v) => v != null)
+  const held = value == null && shown != null
   return (
     <section className="tile" style={{ flex: '1 1 260px', background: '#fff', padding: 24, display: 'flex', flexDirection: 'column', gap: 8 }}>
       <span style={{ fontSize: 15, fontWeight: 600 }}>{label}</span>
-      <span style={{ font: '600 48px/1 var(--body)', letterSpacing: '-.02em' }}>
-        {value == null ? <span style={{ fontSize: 28, color: 'var(--muted)' }}>No reading</span> : <>{Math.round(value)} <small style={{ fontSize: 18 }}>{unit}</small></>}
+      <span style={{ font: '600 48px/1 var(--body)', letterSpacing: '-.02em', color: held ? 'var(--muted)' : undefined }}>
+        {shown == null ? <span style={{ fontSize: 28, color: 'var(--muted)' }}>No reading</span> : <>{Math.round(shown)} <small style={{ fontSize: 18 }}>{unit}</small></>}
       </span>
+      {held && <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--muted)' }}>Last reading: waiting for a new one</span>}
       {steady && <span style={{ fontSize: 14, fontWeight: 600, color: steady.color }}>{steady.text}</span>}
       <Sparkline values={series} />
     </section>
@@ -218,6 +222,7 @@ export default function Camera() {
   const measuring = readings.some((r) => r.reliable)
   const [error, setError] = useState(null)
   const [closedCheck, setClosedCheck] = useState(null) // session id whose heart follow-up was closed
+  const [askQuestions, setAskQuestions] = useState(null) // session id whose optional questionnaire is open
   const last = readings.at(-1)
 
   const run = (path) => async () => {
@@ -291,6 +296,12 @@ export default function Camera() {
 
       {lastSession?.heart_check?.elevated && closedCheck !== lastSession.id && (
         <HeartCheck key={lastSession.id} session={lastSession} onClose={() => setClosedCheck(lastSession.id)} />
+      )}
+
+      {lastSession && !lastSession.heart_check?.elevated && (
+        askQuestions === lastSession.id
+          ? <HeartCheck key={lastSession.id} session={lastSession} onClose={() => setAskQuestions(null)} />
+          : <button type="button" className="btn" style={{ alignSelf: 'flex-start' }} onClick={() => setAskQuestions(lastSession.id)}>Answer the check-in questions anyway</button>
       )}
     </>
   )

@@ -4,9 +4,11 @@ import TileHead from './TileHead.jsx'
 
 // Follow-up after a session with a higher heart rate than usual: rule out everyday causes first,
 // then (only if none apply) a short questionnaire about signs of a high phase, then share it.
+// Without an elevated session it goes straight to the questionnaire, so it can be taken any time.
 export default function HeartCheck({ session, onClose }) {
+  const elevated = !!session?.heart_check?.elevated
   const [form, setForm] = useState(null)
-  const [step, setStep] = useState('reasons') // reasons | explained | questions | result
+  const [step, setStep] = useState(elevated ? 'reasons' : 'questions') // reasons | explained | questions | result
   const [reasons, setReasons] = useState([])
   const [answers, setAnswers] = useState({})
   const [also, setAlso] = useState([])
@@ -21,7 +23,7 @@ export default function HeartCheck({ session, onClose }) {
     setError(null)
     try {
       const row = await api.post('/api/screenings', {
-        session_id: session.id,
+        session_id: session?.id ?? null,
         explained_by: reasons,
         answers: withAnswers ? answers : null,
         also_noticed: withAnswers ? also : [],
@@ -38,8 +40,14 @@ export default function HeartCheck({ session, onClose }) {
 
   return (
     <section className="tile" aria-labelledby="hc" style={{ background: 'var(--butter)', padding: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <TileHead id="hc" kicker="From this session" title="Higher heart rate" tilt={-2} align="start" />
-      <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5 }}>{session.heart_check.message}</p>
+      {elevated ? (
+        <>
+          <TileHead id="hc" kicker="From this session" title="Higher heart rate" tilt={-2} align="start" />
+          <p style={{ margin: 0, fontSize: 15, lineHeight: 1.5 }}>{session.heart_check.message}</p>
+        </>
+      ) : (
+        <TileHead id="hc" kicker="Any time" title="How's your week been?" tilt={-2} align="start" />
+      )}
 
       {step === 'reasons' && (
         <>

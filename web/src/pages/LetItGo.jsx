@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import PaperCrumple from '../components/PaperCrumple/PaperCrumple.jsx'
 import TileHead from '../components/TileHead.jsx'
+import HeartCheck from '../components/HeartCheck.jsx'
 import { api } from '../lib/api.js'
 import { PAPER_H, PAPER_W, notePaperURL } from '../lib/notePaper.js'
 
@@ -13,6 +14,7 @@ export default function LetItGo() {
   const [currentId, setCurrentId] = useState(null)
   const [text, setText] = useState('')
   const [msg, setMsg] = useState(null)
+  const [asking, setAsking] = useState(false)
 
   useEffect(() => {
     api.get('/api/notes').then(setNotes).catch(() => setMsg('Cannot reach the BipolarBird API.'))
@@ -85,6 +87,10 @@ export default function LetItGo() {
           )}
         </section>
       </div>
+
+      {asking
+        ? <HeartCheck onClose={() => setAsking(false)} />
+        : <button type="button" className="btn" style={{ alignSelf: 'flex-start' }} onClick={() => setAsking(true)}>Answer the check-in questions</button>}
     </>
   )
 }

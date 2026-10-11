@@ -42,3 +42,4 @@ Thumbs.db
 
 # Emotion model: 54 MB landmark model is downloaded on first run
 sidecar/emotion/models/lbfmodel.yaml
+sidecar/emotion/models/emotion-ferplus-8.onnx

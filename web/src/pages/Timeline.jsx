@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import TileHead from '../components/TileHead.jsx'
 import AskTimeline from '../components/AskTimeline.jsx'
-import { FlagsChart, MeasureChart, MoodChart, SleepChart } from '../components/DayCharts.jsx'
+import { FlagsChart, MeasureChart, MoodChart } from '../components/DayCharts.jsx'
 import { MEASURED, MEASURED_2, MOOD_COLOR, REPORTED } from '../lib/palette.js'
 import BentoDashboard, { BarChart, DonutChart, RadarChart } from '../components/BentoDashboard/BentoDashboard.jsx'
 import { api } from '../lib/api.js'
@@ -111,7 +111,6 @@ export default function Timeline() {
       <Lane bg="var(--mint)" kicker="Self-reported" title="What you reported"
         legend={<span>Hover a day for details</span>}>
         <div className="daychart-stack">
-          <SleepChart days={days} byDay={reported} />
           <MoodChart days={days} byDay={reported} />
           <FlagsChart days={days} byDay={reported} />
         </div>
