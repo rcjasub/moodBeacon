@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     database_url: str = "postgresql://moodbeacon:moodbeacon@localhost:5433/moodbeacon"
     gemini_api_key: str = ""
     gemini_model: str = "gemini-3.8-flash"
+    # Ask (chat) and the weekly summary are waited on, so they use a lighter, faster model.
+    gemini_fast_model: str = "gemini-3.5-flash-lite"
     sidecar_token: str = "change-me"
     cors_origins: str = "http://localhost:5173"
 

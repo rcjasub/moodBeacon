@@ -1,10 +1,7 @@
 """Weekly summary: numbers are computed in code; Gemini (optional) only rewords them."""
 
-import logging
-
+from . import gemini
 from .config import get_settings
-
-log = logging.getLogger(__name__)
 
 # Last good Gemini wording, reused until the underlying facts change.
 _cache: dict[str, str] = {}
@@ -39,35 +36,18 @@ def _looks_like_summary(text: str) -> bool:
 
 
 async def gemini_summary(facts: dict) -> str | None:
-    s = get_settings()
-    if not s.gemini_api_key:
+    if not gemini.enabled():
         return None
     key = repr(sorted(facts.items()))
     if key in _cache:
         return _cache[key]
-    try:
-        from google import genai
-        from google.genai import types
-
-        client = genai.Client(api_key=s.gemini_api_key)
-        resp = await client.aio.models.generate_content(
-            model=s.gemini_model,
-            contents=(
-                "Rewrite these facts as a short, calm summary for the person:\n\n"
-                f"{template_summary(facts)}"
-            ),
-            config=types.GenerateContentConfig(
-                system_instruction=SYSTEM_INSTRUCTION,
-                temperature=0.2,
-                max_output_tokens=2048,  # newer models spend part of this on reasoning
-            ),
-        )
-        text = (resp.text or "").strip()
-        if not _looks_like_summary(text):
-            return None
-        _cache.clear()
-        _cache[key] = text
-        return text
-    except Exception as e:  # noqa: BLE001
-        log.warning("Gemini summary failed, using template: %s", e)
+    text = await gemini.generate(
+        SYSTEM_INSTRUCTION,
+        f"Rewrite these facts as a short, calm summary for the person:\n\n{template_summary(facts)}",
+        model=get_settings().gemini_fast_model,
+    )
+    if not text or not _looks_like_summary(text):
         return None
+    _cache.clear()
+    _cache[key] = text
+    return text
