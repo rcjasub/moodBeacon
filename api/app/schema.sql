@@ -75,3 +75,15 @@ CREATE TABLE IF NOT EXISTS screenings (
     score             INT,
     is_sample         BOOLEAN NOT NULL DEFAULT FALSE
 );
+
+-- Facts behind a prompt (e.g. which days heart rate was high), for sharing it accurately.
+ALTER TABLE prompts ADD COLUMN IF NOT EXISTS details JSONB;
+
+-- People the person has chosen as contacts for sharing. Nothing is ever sent without a tap.
+CREATE TABLE IF NOT EXISTS contacts (
+    id          SERIAL PRIMARY KEY,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    name        TEXT NOT NULL,
+    email       TEXT NOT NULL,
+    relation    TEXT NOT NULL DEFAULT 'family'   -- family | friend | clinician
+);

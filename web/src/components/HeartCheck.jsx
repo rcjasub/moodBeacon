@@ -139,10 +139,18 @@ function Share({ result, emailEnabled, draftEnabled }) {
     }
   }
 
+  const [contacts, setContacts] = useState([])
+
   // Pre-fill with the clinician or trusted person from the wellness plan, if it's an email.
   useEffect(() => {
     api.get('/api/plan').then((p) => { if (p.clinician_contact?.includes('@')) setTo(p.clinician_contact) }).catch(() => {})
+    api.get('/api/contacts').then(setContacts).catch(() => {})
   }, [])
+
+  const pickContact = (c) => {
+    setTo(c.email)
+    setRecipient(c.relation === 'clinician' ? 'clinician' : c.relation)
+  }
 
   const body = (note.trim() ? `${note.trim()}\n\n` : '') + result.text
   const mailto = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(result.subject)}&body=${encodeURIComponent(body)}`
@@ -165,6 +173,13 @@ function Share({ result, emailEnabled, draftEnabled }) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <label htmlFor="share-to" className="label">Their email</label>
         <input id="share-to" className="input" type="email" value={to} onChange={(e) => setTo(e.target.value)} placeholder="name@example.com" />
+        {contacts.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {contacts.map((c) => (
+              <button key={c.id} type="button" className="chip" aria-pressed={to === c.email} onClick={() => pickContact(c)}>{c.name}</button>
+            ))}
+          </div>
+        )}
       </div>
       <fieldset style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <legend className="label" style={{ marginBottom: 8 }}>Who is it for?</legend>

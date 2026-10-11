@@ -33,7 +33,7 @@ async def save_plan(body: WellnessPlanIn):
 async def export_data():
     async with pool.connection() as conn:
         out = {}
-        for table in ("checkins", "sessions", "readings", "prompts", "wellness_plan", "release_notes", "screenings"):
+        for table in ("checkins", "sessions", "readings", "prompts", "wellness_plan", "release_notes", "screenings", "contacts"):
             cur = await conn.execute(f"SELECT * FROM {table}")
             out[table] = await cur.fetchall()
     return out
@@ -41,9 +41,9 @@ async def export_data():
 
 @router.delete("/data")
 async def delete_all():
-    """Delete all my data: check-ins, sessions, readings, prompts, screenings, the wellness plan and notes."""
+    """Delete all my data: check-ins, sessions, readings, prompts, screenings, contacts, the wellness plan and notes."""
     async with pool.connection() as conn:
-        await conn.execute("TRUNCATE screenings, readings, sessions, checkins, prompts, wellness_plan, release_notes")
+        await conn.execute("TRUNCATE contacts, screenings, readings, sessions, checkins, prompts, wellness_plan, release_notes")
     return {"deleted": True}
 
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import AppointmentPrep from '../components/AppointmentPrep.jsx'
+import TrustedContacts from '../components/TrustedContacts.jsx'
 import TileHead from '../components/TileHead.jsx'
 import { api } from '../lib/api.js'
 
@@ -59,6 +60,8 @@ export default function Plan() {
           <span className="muted" role="status">{status}</span>
         </div>
       </form>
+
+      <TrustedContacts />
 
       <AppointmentPrep />
     </>

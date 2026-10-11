@@ -1,11 +1,8 @@
-import asyncio
 import json
-import smtplib
-from email.message import EmailMessage
 
 from fastapi import APIRouter, HTTPException
 
-from .. import gemini, screening, share_draft
+from .. import gemini, mailer, screening, share_draft
 from ..config import get_settings
 from ..db import pool
 from ..models import ScreeningIn, ShareDraftIn, ShareEmailIn
@@ -66,29 +63,9 @@ async def draft_note(screening_id: int, body: ShareDraftIn):
 
 @router.post("/{screening_id}/email")
 async def email_screening(screening_id: int, body: ShareEmailIn):
-    settings = get_settings()
-    if not settings.email_enabled:
-        raise HTTPException(503, "Email sending is not set up. Use your own email app instead.")
     row = _with_text(await _fetch(screening_id))
-    msg = EmailMessage()
-    msg["Subject"] = SUBJECT
-    msg["From"] = settings.smtp_from or settings.smtp_user
-    msg["To"] = body.to
-    msg.set_content((body.note.strip() + "\n\n" if body.note.strip() else "") + row["text"])
-    try:
-        await asyncio.to_thread(_send, msg)
-    except (smtplib.SMTPException, OSError) as e:
-        raise HTTPException(502, f"Could not send the email: {e}") from e
+    await mailer.send([body.to], SUBJECT, (body.note.strip() + "\n\n" if body.note.strip() else "") + row["text"])
     return {"sent": True}
-
-
-def _send(msg: EmailMessage) -> None:
-    s = get_settings()
-    with smtplib.SMTP(s.smtp_host, s.smtp_port, timeout=20) as smtp:
-        smtp.starttls()
-        if s.smtp_user:
-            smtp.login(s.smtp_user, s.smtp_password)
-        smtp.send_message(msg)
 
 
 async def _fetch(screening_id: int) -> dict:

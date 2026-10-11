@@ -34,6 +34,7 @@ async def status():
         "sidecar_connected": hub.sidecar_connected,
         "active_session": hub.active_session,
         "gemini_enabled": bool(get_settings().gemini_api_key),
+        "email_enabled": get_settings().email_enabled,
     }
 
 

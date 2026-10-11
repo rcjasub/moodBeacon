@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
 
-from .. import heart
+from .. import alerts, heart
 from ..db import pool
 from ..live import hub
 
@@ -66,6 +66,9 @@ async def stop_session():
     # Too few good readings and the typical value isn't worth acting on.
     typical = session["avg_heart_rate"] if session["good_readings"] >= 5 else None
     session["heart_check"] = heart.check(typical, past)
+    async with pool.connection() as conn:
+        alert = await alerts.check_sessions(conn)
+    session["alert"] = alert
     await hub.broadcast({"type": "session", "state": "stopped", "session": session})
     return session
 

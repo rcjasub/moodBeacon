@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .auth import enabled as auth_enabled, require_user
 from .config import get_settings
 from .db import close_db, init_db
-from .routes import auth, checkins, data, insights, live, notes, prompts, screenings, sessions
+from .routes import auth, checkins, contacts, data, insights, live, notes, prompts, screenings, sessions
 
 logging.basicConfig(level=logging.INFO)
 
@@ -30,7 +30,7 @@ app.add_middleware(
 )
 
 # Everything under /api needs a login. The WebSockets check their own tokens (routes/live.py).
-for r in (checkins, prompts, sessions, insights, data, notes, screenings):
+for r in (checkins, contacts, prompts, sessions, insights, data, notes, screenings):
     app.include_router(r.router, dependencies=[Depends(require_user)])
 app.include_router(auth.router)
 app.include_router(live.router)

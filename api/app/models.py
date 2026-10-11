@@ -63,6 +63,17 @@ class ScreeningIn(BaseModel):
         return v
 
 
+class ContactIn(BaseModel):
+    name: str = Field(min_length=1, max_length=100, pattern=r"\S")
+    email: str = Field(max_length=254, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    relation: Literal["family", "friend", "clinician"] = "family"
+
+
+class NotifyIn(BaseModel):
+    contact_ids: list[int] = Field(min_length=1, max_length=20)
+    note: str = Field(default="", max_length=1000)
+
+
 class ShareDraftIn(BaseModel):
     recipient: Literal["friend", "family", "clinician"] = "friend"
 

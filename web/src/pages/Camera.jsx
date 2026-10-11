@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import TileHead from '../components/TileHead.jsx'
 import Sparkline from '../components/Sparkline.jsx'
 import HeartCheck from '../components/HeartCheck.jsx'
@@ -48,6 +49,9 @@ function Preview({ frame, hint }) {
 }
 
 const WARMUP_S = 30
+
+// Developer hints (shell commands) only make sense when running the app locally.
+const LOCAL = ['localhost', '127.0.0.1'].includes(window.location.hostname)
 
 function useElapsed(startedAt) {
   const [now, setNow] = useState(Date.now())
@@ -169,7 +173,13 @@ export default function Camera() {
             ? <button className="btn btn-dark" onClick={run('/api/sessions/stop')}>Stop session</button>
             : <button className="btn btn-dark" onClick={run('/api/sessions/start')} disabled={!sidecar}>Start a session</button>}
         </div>
-        {!sidecar && <p className="muted" style={{ margin: 0 }}>Start the sidecar: <code>cd sidecar && python run_sidecar.py</code></p>}
+        {!sidecar && (
+          <p className="muted" style={{ margin: 0, maxWidth: 420 }}>
+            {LOCAL
+              ? <>Start the sidecar: <code>cd sidecar && python run_sidecar.py</code></>
+              : 'The camera service isn\'t connected. It runs on the computer with the webcam; start it there and this page will update by itself.'}
+          </p>
+        )}
         {error && <p className="error">{error}</p>}
       </section>
 
@@ -190,6 +200,17 @@ export default function Camera() {
               ? `Typical heart rate ${Math.round(lastSession.avg_heart_rate)} bpm and breathing ${Math.round(lastSession.avg_breathing_rate)} per minute, from ${lastSession.good_readings} of ${lastSession.total_readings} readings with good quality.`
               : 'No reliable readings this time. Try again with more light and less movement.'}
           </p>
+        </section>
+      )}
+
+      {lastSession?.alert && (
+        <section className="tile" role="status" style={{ background: 'var(--sun)', padding: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <h2 style={{ fontSize: 20 }}>A pattern worth a look</h2>
+          <p style={{ margin: 0, lineHeight: 1.5 }}>{lastSession.alert.message}</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            <Link className="btn btn-dark" to="/">See it on Today</Link>
+            <Link className="btn" to="/plan#people">People to notify</Link>
+          </div>
         </section>
       )}
 
