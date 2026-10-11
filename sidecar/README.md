@@ -38,9 +38,25 @@ happy, sad, surprise, neutral). Scores come from a model trained on FER2013 faci
 and run on the same in-memory preview frames, twice a second. Like the preview itself, the
 scores are only shown live and are never stored.
 
+**Needs Python 3.11–3.13.** TensorFlow has no stable release for Python 3.14 yet, so
+`pip install -r requirements-emotion.txt` fails there. If your default Python is 3.14, build the
+sidecar venv with an older one:
+
+```bash
+brew install python@3.12        # or any 3.11–3.13
+cd sidecar
+python3.12 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt -r requirements-emotion.txt
+```
+
+If the radar shows "Waiting for a face in view…" forever, check the sidecar log for
+`expression radar off (...)`. That means these packages or the model didn't load.
+
+To retrain the model:
+
 ```bash
 cd sidecar
-pip install -r requirements-emotion.txt   # TensorFlow needs Python 3.10–3.12
+pip install -r requirements-emotion.txt
 python -m emotion.train path/to/fer2013_landmarks_nopathsfixed.csv
 ```
 
