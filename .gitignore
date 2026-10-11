@@ -10,6 +10,7 @@ secrets/
 __pycache__/
 *.py[cod]
 .venv/
+.venv*/
 venv/
 .pytest_cache/
 .mypy_cache/
@@ -40,6 +41,6 @@ Thumbs.db
 .vscode/
 *.swp
 
-# Emotion model: 54 MB landmark model is downloaded on first run
+# Emotion models downloaded on first run: 54 MB landmark model, 34 MB FER+ ONNX model
 sidecar/emotion/models/lbfmodel.yaml
-sidecar/emotion/models/emotion-ferplus-8.onnx
+sidecar/emotion/models/*.onnx
