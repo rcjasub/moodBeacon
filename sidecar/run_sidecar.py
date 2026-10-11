@@ -45,7 +45,8 @@ async def mock_readings() -> AsyncIterator[dict]:
     """Fake readings (1/s) and waveforms (4/s) so the UI can be built without a camera."""
     import math
 
-    hr, br, t = 68.0, 14.0, 0.0
+    # MOCK_HR lets you try the high-heart-rate follow-up without a camera, e.g. MOCK_HR=115.
+    hr, br, t = float(os.getenv("MOCK_HR", "68")), 14.0, 0.0
     tick = 0
     mood = {k: 1.0 for k in LABELS}
     mood["neutral"] = 4.0

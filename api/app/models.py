@@ -1,10 +1,16 @@
 from datetime import date
 from typing import Literal
+from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from .screening import ALSO_IDS, ITEM_IDS, REASON_IDS
 
 Mood = Literal["low", "slightly_low", "steady", "lifted", "very_high"]
 Energy = Literal["very_low", "lower", "usual", "higher", "very_high"]
+Reason = Literal[tuple(REASON_IDS)]
+Item = Literal[tuple(ITEM_IDS)]
+Also = Literal[tuple(ALSO_IDS)]
 
 
 class CheckinIn(BaseModel):
@@ -17,7 +23,6 @@ class CheckinIn(BaseModel):
     racing_thoughts: bool = False
     unusual_activity: bool = False
     off_baseline: bool = False
-    note: str = Field(default="", max_length=2000)
 
 
 class ReadingIn(BaseModel):
@@ -37,3 +42,46 @@ class WellnessPlanIn(BaseModel):
     what_helps: str = Field(default="", max_length=4000)
     clinician_name: str = Field(default="", max_length=200)
     clinician_contact: str = Field(default="", max_length=200)
+
+
+class ReleaseNoteIn(BaseModel):
+    text: str = Field(min_length=1, max_length=600, pattern=r"\S")
+
+
+class ScreeningIn(BaseModel):
+    session_id: UUID | None = None
+    explained_by: list[Reason] = []
+    # Questionnaire answers (0-4 per item). Omitted when an everyday reason explained the reading.
+    answers: dict[Item, int] | None = None
+    also_noticed: list[Also] = []
+
+    @field_validator("answers")
+    @classmethod
+    def all_items_answered(cls, v):
+        if v is not None and (set(v) != set(ITEM_IDS) or any(not 0 <= x <= 4 for x in v.values())):
+            raise ValueError("answer every question with a value from 0 to 4")
+        return v
+
+
+class ContactIn(BaseModel):
+    name: str = Field(min_length=1, max_length=100, pattern=r"\S")
+    email: str = Field(max_length=254, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    relation: Literal["family", "friend", "clinician"] = "family"
+
+
+class NotifyIn(BaseModel):
+    contact_ids: list[int] = Field(min_length=1, max_length=20)
+    note: str = Field(default="", max_length=1000)
+
+
+class ShareDraftIn(BaseModel):
+    recipient: Literal["friend", "family", "clinician"] = "friend"
+
+
+class AskIn(BaseModel):
+    question: str = Field(min_length=3, max_length=300, pattern=r"\S")
+
+
+class ShareEmailIn(BaseModel):
+    to: str = Field(max_length=254, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    note: str = Field(default="", max_length=1000)

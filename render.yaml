@@ -1,0 +1,36 @@
+# Render Blueprint: the API plus a Postgres database. In Render: New > Blueprint > pick this repo.
+# Values marked sync: false are asked for in the dashboard (never commit them).
+databases:
+  - name: bipolarbird-db
+    plan: free
+    databaseName: moodbeacon
+    user: moodbeacon
+
+services:
+  - type: web
+    name: bipolarbird-api
+    runtime: python
+    plan: free
+    rootDir: api
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: DATABASE_URL        # filled in automatically from the database above
+        fromDatabase:
+          name: bipolarbird-db
+          property: connectionString
+      - key: APP_USERNAME
+        sync: false
+      - key: APP_PASSWORD
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: SIDECAR_TOKEN       # copy this value into your local .env for the camera sidecar
+        generateValue: true
+      - key: CORS_ORIGINS        # your Vercel URL, e.g. https://bipolarbird.vercel.app
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false

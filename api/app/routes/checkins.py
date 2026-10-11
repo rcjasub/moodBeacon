@@ -2,7 +2,7 @@ from datetime import date, timedelta
 
 from fastapi import APIRouter
 
-from .. import rules
+from .. import alerts, rules
 from ..db import pool
 from ..models import CheckinIn
 
@@ -10,7 +10,7 @@ router = APIRouter(prefix="/api/checkins", tags=["checkins"])
 
 FIELDS = (
     "mood", "energy", "sleep_hours", "less_sleep_need", "irritable",
-    "racing_thoughts", "unusual_activity", "off_baseline", "note",
+    "racing_thoughts", "unusual_activity", "off_baseline",
 )
 
 
@@ -58,17 +58,7 @@ async def run_rules(conn, today: date) -> list[dict]:
     rows = await cur.fetchall()
     created = []
     for rule_id, message in rules.evaluate(rows, today):
-        # Don't repeat a rule that is already open/snoozed, or was handled in the last 7 days.
-        cur = await conn.execute(
-            """SELECT 1 FROM prompts WHERE rule_id = %s
-               AND (status IN ('open', 'snoozed') OR created_at > now() - interval '7 days')""",
-            (rule_id,),
-        )
-        if await cur.fetchone():
-            continue
-        cur = await conn.execute(
-            "INSERT INTO prompts (rule_id, message) VALUES (%s, %s) RETURNING *",
-            (rule_id, message),
-        )
-        created.append(await cur.fetchone())
+        prompt = await alerts.insert_prompt_once(conn, rule_id, message)
+        if prompt:
+            created.append(prompt)
     return created

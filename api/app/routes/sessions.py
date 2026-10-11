@@ -2,6 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
 
+from .. import alerts, heart
 from ..db import pool
 from ..live import hub
 
@@ -55,6 +56,19 @@ async def stop_session():
         await conn.execute("UPDATE sessions SET ended_at = now() WHERE id = %s", (sid,))
         cur = await conn.execute(STATS_SQL + " WHERE s.id = %s GROUP BY s.id", (sid,))
         session = await cur.fetchone()
+        cur = await conn.execute(
+            """SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY heart_rate) AS hr
+               FROM readings WHERE session_id <> %s AND ts > now() - interval '60 days'
+               GROUP BY session_id HAVING count(heart_rate) >= 5""",
+            (sid,),
+        )
+        past = [r["hr"] for r in await cur.fetchall()]
+    # Too few good readings and the typical value isn't worth acting on.
+    typical = session["avg_heart_rate"] if session["good_readings"] >= 5 else None
+    session["heart_check"] = heart.check(typical, past)
+    async with pool.connection() as conn:
+        alert = await alerts.check_sessions(conn)
+    session["alert"] = alert
     await hub.broadcast({"type": "session", "state": "stopped", "session": session})
     return session
 

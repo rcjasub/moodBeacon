@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
 
+from .. import auth
 from ..config import get_settings
 from ..db import pool
 from ..live import hub
@@ -27,8 +28,11 @@ def clean_emotion(msg: dict) -> dict:
 
 
 @router.websocket("/ws/live")
-async def browser_ws(ws: WebSocket):
+async def browser_ws(ws: WebSocket, token: str = ""):
     """Browser subscribes here for live readings and session state."""
+    if auth.enabled() and not auth.verify_token(token):
+        await ws.close(code=4401)
+        return
     await ws.accept()
     hub.browsers.add(ws)
     await ws.send_text(json.dumps({

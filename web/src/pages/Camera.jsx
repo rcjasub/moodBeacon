@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import TileHead from '../components/TileHead.jsx'
 import Sparkline from '../components/Sparkline.jsx'
 import RadarChart from '../components/RadarChart.jsx'
+import HeartCheck from '../components/HeartCheck.jsx'
 import { api } from '../lib/api.js'
 import { useLive } from '../lib/useLive.js'
 
@@ -15,7 +17,7 @@ function QualityMeter({ quality, reliable }) {
       </div>
       <div role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label="Reading quality"
         style={{ height: 10, borderRadius: 999, background: '#fff', overflow: 'hidden' }}>
-        <div style={{ width: `${pct}%`, height: '100%', background: reliable ? 'var(--brand)' : '#C9A227', transition: 'width .3s' }} />
+        <div style={{ width: `${pct}%`, height: '100%', background: reliable ? 'var(--brand)' : 'var(--sun)', transition: 'width .3s' }} />
       </div>
       <p className="muted" style={{ margin: '8px 0 0' }}>Sit still, face the camera, with light on your face.</p>
     </div>
@@ -49,6 +51,9 @@ function Preview({ frame, hint }) {
 
 const WARMUP_S = 30
 
+// Developer hints (shell commands) only make sense when running the app locally.
+const LOCAL = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+
 function useElapsed(startedAt) {
   const [now, setNow] = useState(Date.now())
   useEffect(() => {
@@ -67,7 +72,7 @@ function SessionClock({ elapsed, measuring }) {
     <div style={{ width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 6 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 15 }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontWeight: 600 }}>
-          <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: 999, background: '#2563EB', animation: 'pulse-dot 1.2s ease-in-out infinite' }} />
+          <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: 999, background: 'var(--accent)', animation: 'pulse-dot 1.2s ease-in-out infinite' }} />
           {measuring ? 'Measuring live' : 'Warming up'}
         </span>
         <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>{mmss(elapsed)}</span>
@@ -75,7 +80,7 @@ function SessionClock({ elapsed, measuring }) {
       {!measuring && (
         <>
           <div style={{ height: 6, borderRadius: 999, background: '#fff', overflow: 'hidden' }}>
-            <div style={{ width: `${warm * 100}%`, height: '100%', background: '#2563EB', transition: 'width .5s linear' }} />
+            <div style={{ width: `${warm * 100}%`, height: '100%', background: 'var(--accent)', transition: 'width .5s linear' }} />
           </div>
           <span className="muted">
             {elapsed < WARMUP_S
@@ -90,11 +95,11 @@ function SessionClock({ elapsed, measuring }) {
 
 function LiveSignal({ traces }) {
   const waves = [
-    ['Pulse wave', traces.pulse, '#2563EB'],
-    ['Breathing wave', traces.breathing, '#0A0A0A'],
+    ['Pulse wave', traces.pulse, '#DC5F28'],
+    ['Breathing wave', traces.breathing, '#4811A6'],
   ]
   return (
-    <section className="tile" style={{ background: '#fff', border: '1px solid #e5e5e5', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <section className="tile" style={{ background: '#fff', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
         <h2 style={{ fontSize: 18 }}>Live signal</h2>
         <span className="muted">Raw waves from the camera, shown live and not saved</span>
@@ -117,8 +122,8 @@ function steadiness(series, tight, loose) {
   if (recent.length < 5) return null
   const spread = Math.max(...recent) - Math.min(...recent)
   if (spread <= tight) return { text: 'Steady reading', color: 'var(--brand-ink)' }
-  if (spread <= loose) return { text: 'Settling', color: '#8A6D00' }
-  return { text: 'Jumping around: hold still', color: '#A33' }
+  if (spread <= loose) return { text: 'Settling', color: '#555' }
+  return { text: 'Jumping around: hold still', color: 'var(--danger)' }
 }
 
 function Metric({ label, unit, value, series, tight, loose }) {
@@ -212,6 +217,7 @@ export default function Camera() {
   const elapsed = useElapsed(active ? startedAt : null)
   const measuring = readings.some((r) => r.reliable)
   const [error, setError] = useState(null)
+  const [closedCheck, setClosedCheck] = useState(null) // session id whose heart follow-up was closed
   const last = readings.at(-1)
 
   const run = (path) => async () => {
@@ -240,7 +246,13 @@ export default function Camera() {
             ? <button className="btn btn-dark" onClick={run('/api/sessions/stop')}>Stop session</button>
             : <button className="btn btn-dark" onClick={run('/api/sessions/start')} disabled={!sidecar}>Start a session</button>}
         </div>
-        {!sidecar && <p className="muted" style={{ margin: 0 }}>Start the sidecar: <code>cd sidecar && python run_sidecar.py</code></p>}
+        {!sidecar && (
+          <p className="muted" style={{ margin: 0, maxWidth: 420 }}>
+            {LOCAL
+              ? <>Start the sidecar: <code>cd sidecar && python run_sidecar.py</code></>
+              : 'The camera service isn\'t connected. It runs on the computer with the webcam; start it there and this page will update by itself.'}
+          </p>
+        )}
         {error && <p className="error">{error}</p>}
       </section>
 
@@ -264,6 +276,21 @@ export default function Camera() {
               : 'No reliable readings this time. Try again with more light and less movement.'}
           </p>
         </section>
+      )}
+
+      {lastSession?.alert && (
+        <section className="tile" role="status" style={{ background: 'var(--sun)', padding: 24, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <h2 style={{ fontSize: 20 }}>A pattern worth a look</h2>
+          <p style={{ margin: 0, lineHeight: 1.5 }}>{lastSession.alert.message}</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            <Link className="btn btn-dark" to="/">See it on Today</Link>
+            <Link className="btn" to="/plan#people">People to notify</Link>
+          </div>
+        </section>
+      )}
+
+      {lastSession?.heart_check?.elevated && closedCheck !== lastSession.id && (
+        <HeartCheck key={lastSession.id} session={lastSession} onClose={() => setClosedCheck(lastSession.id)} />
       )}
     </>
   )

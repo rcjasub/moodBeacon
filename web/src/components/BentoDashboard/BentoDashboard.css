@@ -1,0 +1,46 @@
+/* Brutalist bento: thick black borders, hard offset shadows, dot texture. */
+.bento { position: relative; margin-top: 24px; padding: 8px 8px 8px 0; display: flex; flex-direction: column; gap: 24px; }
+.bento-header h2 { font: 900 clamp(32px, 6vw, 56px)/1 var(--body); text-transform: uppercase; letter-spacing: -.04em; }
+.bento-header p { margin: 8px 0 0; font-size: 13px; font-weight: 700; color: #71717a; text-transform: uppercase; letter-spacing: .12em; }
+.bento-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 24px; }
+.bento-col { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+
+.bento-card { position: relative; flex: 1; min-height: 320px; padding: 24px; background: #fff; border: 3px solid #000; box-shadow: 8px 8px 0 0 #000; display: flex; flex-direction: column; overflow: hidden; }
+.bento-title { font: 900 20px var(--body); text-transform: uppercase; border-bottom: 3px solid #000; padding-bottom: 8px; margin-bottom: 24px; }
+.bento-dots { position: absolute; inset: 0; pointer-events: none; opacity: .2; background: radial-gradient(#000 1px, transparent 1px) 0 0 / 4px 4px; }
+.bento-dots-lg { opacity: .07; background-size: 12px 12px; background-image: radial-gradient(#000 1.5px, transparent 1.5px); }
+.bento-empty { margin: auto; font-weight: 700; }
+
+/* Bars */
+.bento-bars { flex: 1; min-height: 180px; display: flex; align-items: flex-end; gap: clamp(6px, 2vw, 16px); }
+.bento-bar-slot { position: relative; flex: 1; height: 100%; display: flex; align-items: flex-end; justify-content: center; }
+.bento-bar { position: relative; width: 100%; border: 3px solid #000; transform-origin: bottom; display: flex; align-items: center; justify-content: center; overflow: hidden; cursor: pointer; }
+.bento-bar-label { position: relative; font: 700 11px ui-monospace, monospace; color: #fff; }
+.bento-bar-empty { font: 700 11px/1.4 ui-monospace, monospace; color: #a1a1aa; text-align: center; }
+.bento-tip { position: absolute; bottom: 100%; left: 50%; translate: -50% 0; margin-bottom: 4px; z-index: 3; pointer-events: none; white-space: nowrap; padding: 4px 10px; background: #000; color: #fff; font: 900 13px var(--body); border: 3px solid #000; }
+
+/* Radar */
+.bento-radar { flex-direction: row; flex-wrap: wrap; gap: 24px; background: #fafafa; }
+.bento-radar-chart { position: relative; flex: 1 1 220px; min-height: 240px; display: flex; align-items: center; justify-content: center; }
+.bento-radar-svg { width: 100%; max-width: 300px; overflow: visible; }
+.bento-watermark { position: absolute; font: 900 clamp(48px, 9vw, 88px) var(--body); text-transform: uppercase; opacity: .05; pointer-events: none; }
+.bento-radar-list { flex: 1 1 180px; display: flex; flex-direction: column; justify-content: center; gap: 4px; z-index: 1; }
+
+.bento-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px; border: 2px solid transparent; cursor: pointer; font-size: 14px; }
+.bento-row:hover { border-color: #000; background: #fff; }
+.bento-row-name { display: flex; align-items: center; gap: 8px; font: 700 12px ui-monospace, monospace; text-transform: uppercase; }
+.bento-swatch { width: 12px; height: 12px; flex: none; border: 2px solid #000; }
+
+/* Donut */
+.bento-donut { align-items: center; }
+.bento-donut-title { font-size: 24px; letter-spacing: -.03em; width: 100%; text-align: center; margin-bottom: 32px; z-index: 1; }
+.bento-donut-body { z-index: 1; flex: 1; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.bento-donut-ring { position: relative; width: min(100%, 320px); aspect-ratio: 1; }
+.bento-donut-svg { width: 100%; height: 100%; overflow: visible; }
+.bento-donut-center { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.bento-donut-center-inner { display: flex; flex-direction: column; align-items: center; }
+.bento-big { font: 900 22px/1 var(--body); }
+.bento-big-lg { font-size: 34px; }
+.bento-sub { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: #71717a; margin-top: 4px; }
+.bento-tag { margin-top: 4px; padding: 0 4px; background: #000; color: #fff; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: .12em; }
+.bento-legend { width: 100%; margin-top: 24px; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }

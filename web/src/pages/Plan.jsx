@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import AppointmentPrep from '../components/AppointmentPrep.jsx'
+import TrustedContacts from '../components/TrustedContacts.jsx'
 import TileHead from '../components/TileHead.jsx'
 import { api } from '../lib/api.js'
 
@@ -26,12 +28,12 @@ export default function Plan() {
 
   return (
     <>
-      <header className="page-header">
+      <header className="page-header no-print">
         <h1>Wellness plan</h1>
         <p className="lede">Written with your care team. Shown whenever a follow-up prompt appears, so your own plan is one tap away.</p>
       </header>
 
-      <form className="tile" onSubmit={save} style={{ background: 'var(--page)', padding: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <form className="tile no-print" onSubmit={save} style={{ background: 'var(--page)', padding: 28, display: 'flex', flexDirection: 'column', gap: 20 }}>
         <TileHead kicker="In your own words" title="My plan" tilt={-1} align="start" />
         <Field id="signs" label="Early signs I watch for" value={plan.early_signs} onChange={set('early_signs')}
           hint="For example: sleeping less but not feeling tired, talking faster, spending more." />
@@ -58,6 +60,10 @@ export default function Plan() {
           <span className="muted" role="status">{status}</span>
         </div>
       </form>
+
+      <TrustedContacts />
+
+      <AppointmentPrep />
     </>
   )
 }

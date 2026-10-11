@@ -21,9 +21,28 @@ class Settings(BaseSettings):
     # readings below this quality are stored as "no reading" (null values).
     min_quality: float = 0.6
 
+    # Login. Leave APP_PASSWORD empty to turn login off (local development only).
+    app_username: str = "admin"
+    app_password: str = ""
+    session_secret: str = ""
+    session_days: int = 7
+
+    # Optional: send shared check-ins straight from the app. Without these the browser
+    # opens the person's own email app instead.
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = ""
+
+    @property
+    def email_enabled(self) -> bool:
+        return bool(self.smtp_host and (self.smtp_from or self.smtp_user))
+
     @property
     def cors_origin_list(self) -> list[str]:
-        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+        # Browsers send origins without a trailing slash, so drop any that were pasted with one.
+        return [o.strip().rstrip("/") for o in self.cors_origins.split(",") if o.strip()]
 
 
 @lru_cache

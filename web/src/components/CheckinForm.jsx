@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { api } from '../lib/api.js'
 import { ENERGIES, MOODS, todayISO } from '../lib/format.js'
 import TileHead from './TileHead.jsx'
 
 const EMPTY = {
   mood: null, energy: null, sleep_hours: '', less_sleep_need: false,
-  irritable: false, racing_thoughts: false, unusual_activity: false, off_baseline: false, note: '',
+  irritable: false, racing_thoughts: false, unusual_activity: false, off_baseline: false,
 }
 
 const FLAGS = [
@@ -53,7 +54,7 @@ export default function CheckinForm({ onSaved }) {
     }
     try {
       const body = { ...form, day: todayISO(), sleep_hours: form.sleep_hours === '' ? null : Number(form.sleep_hours) }
-      for (const k of ['id', 'created_at', 'is_sample']) delete body[k]
+      for (const k of ['id', 'created_at', 'is_sample', 'note']) delete body[k]
       const res = await api.put('/api/checkins', body)
       setStatus('Saved.')
       onSaved?.(res)
@@ -91,12 +92,9 @@ export default function CheckinForm({ onSaved }) {
         ))}
       </fieldset>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <label htmlFor="note" className="label">
-          Note <span style={{ fontWeight: 400, color: 'var(--mint-ink)' }}>(optional: travel, a late night, a medication change)</span>
-        </label>
-        <textarea id="note" className="textarea" rows={2} value={form.note} onChange={(e) => set('note')(e.target.value)} />
-      </div>
+      <p className="muted" style={{ margin: 0 }}>
+        Something on your mind? <Link to="/let-it-go">Write it down and let it go</Link>.
+      </p>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
         <button type="submit" className="btn btn-dark">Save check-in</button>

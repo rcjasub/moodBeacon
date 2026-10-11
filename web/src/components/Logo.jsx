@@ -1,12 +1,11 @@
-// BipolarBird mark: "BB" in a blue circle.
+// BipolarBird mark: a white songbird in a black circle.
 export default function Logo({ size = 28, style }) {
   return (
     <svg width={size} height={size} viewBox="0 0 30 30" aria-hidden="true" style={style}>
-      <circle cx="15" cy="15" r="13.5" fill="#2563EB" />
-      <text x="15" y="15.5" textAnchor="middle" dominantBaseline="central" fill="#fff"
-        fontFamily="'Outfit', 'Inter Tight', system-ui, sans-serif" fontWeight="600" fontSize="12.5" letterSpacing="-0.4">
-        BB
-      </text>
+      <circle cx="15" cy="15" r="14" fill="#0A0A0A" />
+      <path fill="#fff" d="M22.4 10.2 L25.6 11.3 L22.5 12.5 C22.3 16.6 19.4 20.4 14.6 21 L9.2 23.6 L10.9 20.1 C7.6 18.6 7.8 14.6 10.5 13.6 C12.6 12.9 14.2 13.6 15.4 12.2 C15.8 9.3 17.4 7.4 19.2 7.4 C20.8 7.4 22 8.6 22.4 10.2 Z" />
+      <path fill="none" stroke="#0A0A0A" strokeWidth="1.1" strokeLinecap="round" d="M17.8 14.2 C16.6 17.4 13.9 18.7 10.9 18.3" />
+      <circle cx="20.1" cy="10" r="0.85" fill="#0A0A0A" />
     </svg>
   )
 }
