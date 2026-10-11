@@ -8,6 +8,9 @@ Sources:
   mock     fake readings for UI development (no camera, no key)
   presage  runs the SmartSpectra Node SDK (presage_node/stream.mjs): readings, a small
            live preview (forwarded to your browser, never stored) and positioning tips
+
+If the emotion model is trained (emotion/train.py), preview frames also feed a facial
+expression estimate for the radar chart; frames are still never stored.
 """
 
 import asyncio
@@ -22,6 +25,8 @@ from pathlib import Path
 
 import websockets
 from dotenv import load_dotenv
+
+from emotion import LABELS
 
 # All keys live in one git-ignored file at the repo root: mbeacon/.env
 load_dotenv(Path(__file__).resolve().parents[1] / ".env")
@@ -43,6 +48,8 @@ async def mock_readings() -> AsyncIterator[dict]:
     # MOCK_HR lets you try the high-heart-rate follow-up without a camera, e.g. MOCK_HR=115.
     hr, br, t = float(os.getenv("MOCK_HR", "68")), 14.0, 0.0
     tick = 0
+    mood = {k: 1.0 for k in LABELS}
+    mood["neutral"] = 4.0
     while True:
         await asyncio.sleep(0.25)
         samples = [t + i * 0.025 for i in range(10)]
@@ -58,9 +65,13 @@ async def mock_readings() -> AsyncIterator[dict]:
             br += random.gauss(0, 0.3)
             yield {"type": "reading", "heart_rate": round(hr, 1), "breathing_rate": round(br, 1),
                    "quality": round(random.uniform(0.35, 1.0), 2)}
+            for k in mood:
+                mood[k] = max(0.05, mood[k] * math.exp(random.gauss(0, 0.15)))
+            total = sum(mood.values())
+            yield {"type": "emotion", "face": True, "scores": {k: round(v / total, 3) for k, v in mood.items()}}
 
 
-MESSAGE_TYPES = {"reading", "frame", "hint", "trace"}
+MESSAGE_TYPES = {"reading", "frame", "hint", "trace", "emotion"}
 
 
 def parse_presage_line(line: str) -> dict | None:
@@ -102,17 +113,58 @@ async def presage_readings() -> AsyncIterator[dict]:
 SOURCES = {"mock": mock_readings, "presage": presage_readings}
 
 
-async def stream(ws) -> None:
-    # aclosing() makes cancellation run the source's cleanup right away, so the camera is released.
-    async with aclosing(SOURCES[SOURCE]()) as messages:
-        async for msg in messages:
-            await ws.send(json.dumps(msg))
+EMOTION_INTERVAL_S = 0.5
+
+
+def load_emotion_tracker():
+    """Optional: needs requirements-emotion.txt and a trained model, otherwise the radar stays off."""
+    try:
+        from emotion.tracker import EmotionTracker
+    except ImportError as e:
+        log.info("expression radar off (%s); see sidecar/README.md", e)
+        return None
+    return EmotionTracker.load_or_none()
+
+
+async def emotion_loop(ws, tracker, latest: dict) -> None:
+    """Scores the newest preview frame twice a second; older frames are simply skipped."""
+    while True:
+        await asyncio.sleep(EMOTION_INTERVAL_S)
+        jpeg = latest.pop("jpeg", None)
+        if not jpeg:
+            continue
+        try:
+            msg = await asyncio.to_thread(tracker.update, jpeg)
+        except Exception as e:  # noqa: BLE001
+            log.warning("expression estimate failed: %s", e)
+            continue
+        await ws.send(json.dumps(msg))
+
+
+async def stream(ws, tracker) -> None:
+    """tracker: an emotion.tracker.EmotionTracker, or None."""
+    latest: dict = {}
+    if tracker:
+        tracker.reset()
+    scorer = asyncio.create_task(emotion_loop(ws, tracker, latest)) if tracker else None
+    try:
+        # aclosing() makes cancellation run the source's cleanup right away, so the camera is released.
+        async with aclosing(SOURCES[SOURCE]()) as messages:
+            async for msg in messages:
+                if msg["type"] == "frame":
+                    latest["jpeg"] = msg["jpeg"]
+                await ws.send(json.dumps(msg))
+    finally:
+        if scorer:
+            scorer.cancel()
 
 
 async def run() -> None:
     if SOURCE not in SOURCES:
         raise SystemExit(f"SOURCE={SOURCE!r} in .env is not valid; use one of: {', '.join(SOURCES)}")
     url = f"{API_WS_URL}?token={TOKEN}"
+    # The mock source sends its own fake scores; only real frames need the model.
+    tracker = load_emotion_tracker() if SOURCE == "presage" else None
     while True:
         try:
             async with websockets.connect(url) as ws:
@@ -122,7 +174,7 @@ async def run() -> None:
                     msg = json.loads(raw)
                     if msg["type"] == "start" and not task:
                         log.info("session %s started, camera on", msg.get("session_id"))
-                        task = asyncio.create_task(stream(ws))
+                        task = asyncio.create_task(stream(ws, tracker))
                     elif msg["type"] == "stop" and task:
                         task.cancel()
                         task = None

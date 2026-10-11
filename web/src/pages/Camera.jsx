@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import TileHead from '../components/TileHead.jsx'
 import Sparkline from '../components/Sparkline.jsx'
+import RadarChart from '../components/RadarChart.jsx'
 import HeartCheck from '../components/HeartCheck.jsx'
 import { api } from '../lib/api.js'
 import { useLive } from '../lib/useLive.js'
@@ -139,8 +140,80 @@ function Metric({ label, unit, value, series, tight, loose }) {
   )
 }
 
+// Ordered so related expressions sit next to each other on the radar.
+const EMOTION_AXES = [
+  { key: 'happy', label: 'Happy' },
+  { key: 'surprise', label: 'Surprise' },
+  { key: 'fear', label: 'Fear' },
+  { key: 'angry', label: 'Angry' },
+  { key: 'disgust', label: 'Disgust' },
+  { key: 'sad', label: 'Sad' },
+  { key: 'neutral', label: 'Neutral' },
+]
+
+function LegendKey({ color, dashed, children }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 14 }}>
+      <svg width="22" height="10" aria-hidden="true">
+        <line x1="1" y1="5" x2="21" y2="5" stroke={color} strokeWidth="2" strokeDasharray={dashed ? '5 4' : undefined} />
+      </svg>
+      {children}
+    </span>
+  )
+}
+
+function ExpressionRadar({ current, average, faceVisible, active }) {
+  const now = active ? current : null
+  const series = [
+    { name: 'Now', values: now, color: 'var(--brand)' },
+    { name: 'Session average', values: average, color: 'var(--ink)', dashed: true },
+  ]
+  const values = now ?? average
+  return (
+    <section className="tile" style={{ background: '#fff', border: '1px solid #e5e5e5', padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+        <h2 style={{ fontSize: 18 }}>Facial expression</h2>
+        <span className="muted">Estimated from face landmarks, shown live and not saved</span>
+      </div>
+      {!values
+        ? <span className="muted" style={{ minHeight: 120, display: 'flex', alignItems: 'center' }}>Waiting for a face in view…</span>
+        : (
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 24 }}>
+            <RadarChart axes={EMOTION_AXES} series={series} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 200 }}>
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+                {now && <LegendKey color="var(--brand)">Now</LegendKey>}
+                {average && <LegendKey color="var(--ink)" dashed>Session average</LegendKey>}
+              </div>
+              <table style={{ borderCollapse: 'collapse', fontSize: 14, fontVariantNumeric: 'tabular-nums' }}>
+                <thead>
+                  <tr style={{ textAlign: 'left', color: 'var(--muted)' }}>
+                    <th style={{ fontWeight: 500, padding: '2px 12px 6px 0' }}>Expression</th>
+                    {now && <th style={{ fontWeight: 500, padding: '2px 12px 6px 0', textAlign: 'right' }}>Now</th>}
+                    {average && <th style={{ fontWeight: 500, padding: '2px 0 6px', textAlign: 'right' }}>Average</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {EMOTION_AXES.map((a) => (
+                    <tr key={a.key} style={{ borderTop: '1px solid #f0f0f0' }}>
+                      <td style={{ padding: '4px 12px 4px 0' }}>{a.label}</td>
+                      {now && <td style={{ padding: '4px 12px 4px 0', textAlign: 'right', fontWeight: 600 }}>{Math.round(now[a.key] * 100)}%</td>}
+                      {average && <td style={{ padding: '4px 0', textAlign: 'right' }}>{Math.round(average[a.key] * 100)}%</td>}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {active && !faceVisible && <span style={{ fontSize: 14, fontWeight: 600, color: '#8A6D00' }}>Face not found: showing the last estimate</span>}
+            </div>
+          </div>
+        )}
+      <p className="muted" style={{ margin: 0 }}>This reads facial expression only. It is not a measure of how you feel, and it can be wrong.</p>
+    </section>
+  )
+}
+
 export default function Camera() {
-  const { sidecar, active, readings, lastSession, frame, hint, traces, startedAt } = useLive()
+  const { sidecar, active, readings, lastSession, frame, hint, traces, startedAt, emotion, faceVisible, emotionAvg } = useLive()
   const elapsed = useElapsed(active ? startedAt : null)
   const measuring = readings.some((r) => r.reliable)
   const [error, setError] = useState(null)
@@ -184,6 +257,8 @@ export default function Camera() {
       </section>
 
       {active && <LiveSignal traces={traces} />}
+
+      {(active || emotionAvg) && <ExpressionRadar current={emotion} average={emotionAvg} faceVisible={faceVisible} active={active} />}
 
       {(active || readings.length > 0) && (
         <div className="row">
