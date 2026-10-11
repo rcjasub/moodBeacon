@@ -22,9 +22,11 @@ const sdk = new SmartSpectraSDK({
 })
 
 // MeasurementWithConfidence: { value, confidence, stable, timestamp }.
-// Confidence comes on a 0-100 scale; the API expects 0-1.
+// Confidence comes on a 0-100 scale; the API expects 0-1. Returns null when the SDK omits it,
+// so a missing confidence doesn't count as zero quality.
 function score(m) {
-  const raw = typeof m.confidence === 'number' ? m.confidence : 0
+  if (typeof m.confidence !== 'number') return null
+  const raw = m.confidence
   return Math.max(0, Math.min(1, raw > 1 ? raw / 100 : raw))
 }
 
@@ -35,33 +37,38 @@ const median = (xs) => {
 }
 
 // Consistency filter for one signal. Only keeps values the SDK marks stable (protobuf omits
-// false, so a missing flag means NOT stable), within a plausible range, and not a sudden spike
+// false, so a missing flag means NOT stable), or, when minConfidence is set, unstable values
+// whose confidence reaches it. Values must also be in a plausible range and not a sudden spike
 // away from the recent median. Reports the median over a window that matches Presage's own
 // averaging (12 s pulse, 30 s breathing), so the number on screen doesn't jump around.
-function makeTracker({ min, max, windowMs, staleMs = 10000, spike = 0.2 }) {
+function makeTracker({ min, max, windowMs, staleMs = 10000, spike = 0.2, minConfidence = null }) {
   let vals = [] // { v, q, at }
   const prune = (now) => { vals = vals.filter((x) => now - x.at <= windowMs) }
   return {
     add(m, now) {
       prune(now)
       const v = m.value
-      if (m.stable !== true || !(v >= min && v <= max)) return
+      const q = score(m)
+      const confident = minConfidence != null && q != null && q >= minConfidence
+      if ((m.stable !== true && !confident) || !(v >= min && v <= max)) return
       if (vals.length >= 3) {
         const med = median(vals.map((x) => x.v))
         if (Math.abs(v - med) / med > spike) return // one-off jump: ignore it
       }
-      vals.push({ v, q: score(m), at: now })
+      vals.push({ v, q, at: now })
     },
     current(now) {
       prune(now)
       if (!vals.length || now - vals.at(-1).at > staleMs) return null // face lost / poor light
-      return { value: Math.round(median(vals.map((x) => x.v)) * 10) / 10, q: median(vals.map((x) => x.q)) }
+      const qs = vals.map((x) => x.q).filter((q) => q != null)
+      return { value: Math.round(median(vals.map((x) => x.v)) * 10) / 10, q: qs.length ? median(qs) : null }
     },
   }
 }
 
 const hrTrack = makeTracker({ min: 40, max: 180, windowMs: 12000 })
-const brTrack = makeTracker({ min: 4, max: 40, windowMs: 30000 })
+// Breathing is rarely marked stable, so also accept values with at least 50% confidence.
+const brTrack = makeTracker({ min: 4, max: 40, windowMs: 30000, minConfidence: 0.5 })
 
 // Diagnostics on stderr (ends up in the sidecar log): what the SDK is actually sending.
 const seen = { metrics: 0, hr: 0, br: 0, lastHr: null, lastBr: null }
@@ -139,6 +146,7 @@ const timer = setInterval(() => {
     type: 'reading',
     heart_rate: hr?.value ?? null,
     breathing_rate: br?.value ?? null,
+    // A signal without a confidence score doesn't lower quality; reaching here means it passed the filter.
     quality: hr || br ? Math.min(hr?.q ?? 1, br?.q ?? 1) : 0,
     reliable: Boolean(hr || br),
   })
